@@ -19,7 +19,7 @@
 #include <arpa/inet.h>
 #endif
 
-const char *chiaki_discovery_host_state_string(ChiakiDiscoveryHostState state)
+CHIAKI_EXPORT const char *chiaki_discovery_host_state_string(ChiakiDiscoveryHostState state)
 {
 	switch(state)
 	{
