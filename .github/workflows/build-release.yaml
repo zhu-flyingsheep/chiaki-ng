@@ -176,7 +176,7 @@ jobs:
 
       - name: Build chiaki-ng
         run: |
-          cmake --build build --config Release --clean-first --target chiaki
+          cmake --build build --config Debug --clean-first --target chiaki
 
       - name: Prepare Qt deployment package
         run: |

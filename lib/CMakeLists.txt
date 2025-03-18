@@ -110,7 +110,12 @@ if(CHIAKI_LIB_ENABLE_OPUS)
 	include_directories(${Opus_INCLUDE_DIRS})
 endif()
 
-add_library(chiaki-lib ${HEADER_FILES} ${SOURCE_FILES} ${CHIAKI_LIB_PROTO_SOURCE_FILES} ${CHIAKI_LIB_PROTO_HEADER_FILES})
+add_library(chiaki-lib SHARED ${HEADER_FILES} ${SOURCE_FILES} ${CHIAKI_LIB_PROTO_SOURCE_FILES} ${CHIAKI_LIB_PROTO_HEADER_FILES})
+# 定义动态库的导出宏（仅 Windows 生效）
+if(WIN32)
+    target_compile_definitions(chiaki-lib PRIVATE 
+        CHIAKI_LIB_EXPORTS  # 触发头文件中的 dllexport
+    )
 configure_file(config.h.in include/chiaki/config.h)
 target_include_directories(chiaki-lib PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/include")
 
