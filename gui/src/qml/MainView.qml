@@ -263,7 +263,7 @@ Pane {
                         if (modelData.name)
                             t += modelData.name + "\n";
                         if (modelData.address)
-                            t += qsTr("Address11: %1").arg(modelData.address);
+                            t += qsTr("Address: %1").arg(modelData.address);
                         if (modelData.mac)
                             t += "\n" + qsTr("ID: %1 (%2)").arg(modelData.mac).arg(modelData.registered ? qsTr("registered") : qsTr("unregistered"));
                         if (modelData.duid)
