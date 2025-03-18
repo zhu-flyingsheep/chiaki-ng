@@ -87,10 +87,14 @@ add_library(placebo-libav-impl src/libav_impl.c)
 target_link_libraries(placebo-libav-impl PkgConfig::LIBPLACEBO FFMPEG::avcodec FFMPEG::avutil FFMPEG::avformat)
 target_link_libraries(chiaki PkgConfig::LIBPLACEBO placebo-libav-impl)
 
+# 2. 显式声明依赖关系（确保 chiaki-lib 先于 chiaki 构建）
+add_dependencies(chiaki chiaki-lib)  # <--- 加在这里
+
 target_link_libraries(chiaki chiaki-lib)
 # 自动复制 DLL 到可执行文件目录（仅 Windows 需要）
 if(WIN32)
     add_custom_command(TARGET chiaki POST_BUILD
+	    COMMAND ${CMAKE_COMMAND} -E echo "Copying DLL..."
         COMMAND ${CMAKE_COMMAND} -E copy
             $<TARGET_FILE:chiaki-lib>   # 源路径：chiaki-lib.dll
             $<TARGET_FILE_DIR:chiaki>   # 目标路径：my_app.exe 所在目录

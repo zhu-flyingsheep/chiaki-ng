@@ -111,11 +111,20 @@ if(CHIAKI_LIB_ENABLE_OPUS)
 endif()
 
 add_library(chiaki-lib SHARED ${HEADER_FILES} ${SOURCE_FILES} ${CHIAKI_LIB_PROTO_SOURCE_FILES} ${CHIAKI_LIB_PROTO_HEADER_FILES})
+
+# 添加自定义目标，在构建后打印 DLL 路径
+add_custom_command(TARGET chiaki-lib POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E echo "CHIAKI_LIB_DLL_PATH = $<TARGET_FILE:chiaki-lib>"
+    VERBATIM
+)
+
+# 检查生成的 DLL 名称（关键代码）
+get_target_property(CHIAKI_LIB_OUTPUT_NAME chiaki-lib OUTPUT_NAME)
+message("DLL name: ${CHIAKI_LIB_OUTPUT_NAME}.dll")  # 输出调试信息
+
 # 定义动态库的导出宏（仅 Windows 生效）
 if(WIN32)
-    target_compile_definitions(chiaki-lib PRIVATE
-        CHIAKI_LIB_EXPORTS  # 触发头文件中的 dllexport
-    )
+    target_compile_definitions(chiaki-lib PRIVATE CHIAKI_LIB_EXPORTS)
 endif()
 
 configure_file(config.h.in include/chiaki/config.h)
