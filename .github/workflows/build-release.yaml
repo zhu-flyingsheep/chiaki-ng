@@ -177,11 +177,16 @@ jobs:
       - name: Build chiaki-ng
         run: |
           cmake --build build --config Debug --clean-first --target chiaki
+          
+      - name: List build directory (debug)
+        run: |
+          ls -R build  # 递归列出 build 目录内容
 
       - name: Prepare Qt deployment package
         run: |
           mkdir chiaki-ng-Win
           cp build\gui\chiaki.exe chiaki-ng-Win
+          cp build\lib\chiaki.dll chiaki-ng-Win  #  复制dell
           cp scripts\qtwebengine_import.qml gui\src\qml\
           cp "${{ github.workspace }}\vcpkg_installed\${{ env.triplet }}\bin\libcrypto-*-x64.dll" chiaki-ng-Win
           cp "${{ github.workspace }}\vcpkg_installed\${{ env.triplet }}\bin\libssl-*-x64.dll" chiaki-ng-Win
