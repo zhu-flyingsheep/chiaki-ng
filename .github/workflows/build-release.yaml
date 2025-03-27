@@ -5,6 +5,30 @@ on:
     tags: [ 'v*.*.*' ]
 
 jobs:
+  create-release:
+    name: Upload release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.ref }}
+    - name: generate release notes
+      working-directory: ${{ github.workspace }}
+      run: |
+        git tag -l --format='%(contents)' ${GITHUB_REF_NAME} >> doc/release_notes.md
+
+    - uses: ncipollo/release-action@v1
+      id: maker
+      with:
+        prerelease: false
+        allowUpdates: true
+        bodyFile: "${{ github.workspace }}/doc/release_notes.md"
+        token: "${{ secrets.RELEASE_PAT }}"
+    outputs:
+      upload_url: ${{ steps.maker.outputs.upload_url }}
+
   build-win_x64:
     name: Build chiaki-ng win_x64 (VC)
     runs-on: windows-latest
@@ -67,7 +91,7 @@ jobs:
       - name: Setup Qt
         uses: jurplel/install-qt-action@v4
         with:
-          version: "6.8.*"
+          version: "6.8.2"
           host: 'windows'
           target: 'desktop'
           modules: 'qtwebengine qtpositioning qtwebchannel qtwebsockets qtserialport'
@@ -214,3 +238,5 @@ jobs:
           upload-release-files: true
           if-no-files-found: error
           release-upload-url: ${{ needs.create-release.outputs.upload_url }}
+
+  
