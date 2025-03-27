@@ -179,10 +179,10 @@ Pane {
     ListView {
         id: hostsView
         keyNavigationWraps: true
+        width: parent.width*0.75
         anchors {
             top: toolBar.bottom
             left: parent.left
-            right: parent.right
             bottom: parent.bottom
             bottomMargin: 50
         }

@@ -1025,12 +1025,32 @@ bool QmlBackend::registerHost(const QString &host, const QString &psn_id, const 
     info.holepunch_info = nullptr;
     info.rudp = nullptr;
     QByteArray psn_idb;
-    if (target == CHIAKI_TARGET_PS4_8) {
+    if (target == CHIAKI_TARGET_PS4_8)
+    {
         psn_idb = psn_id.toUtf8();
         info.psn_online_id = psn_idb.constData();
-    } else {
-        QByteArray account_id = QByteArray::fromBase64(psn_id.toUtf8());
-        if (account_id.size() != CHIAKI_PSN_ACCOUNT_ID_SIZE) {
+    }
+    else
+    {
+        bool ok;
+        quint64 intId = psn_id.toULongLong(&ok);
+        QByteArray account_id;
+        if (ok)
+        {
+            for (int i = 0; i < 8; ++i)
+            {
+                account_id.append(static_cast<char>((intId >> (i * 8)) & 0xFF));
+            }
+        }
+        else
+        {
+            emit error(tr("Invalid Psnid"), tr("请检查psnID是否正确").arg(CHIAKI_PSN_ACCOUNT_ID_SIZE));
+            return false;
+        }
+
+        if (account_id.size() != CHIAKI_PSN_ACCOUNT_ID_SIZE)
+        {
+
             emit error(tr("Invalid Account-ID"), tr("The PSN Account-ID must be exactly %1 bytes encoded as base64.").arg(CHIAKI_PSN_ACCOUNT_ID_SIZE));
             return false;
         }

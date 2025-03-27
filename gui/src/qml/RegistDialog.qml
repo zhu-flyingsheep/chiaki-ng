@@ -68,15 +68,15 @@ DialogView {
 
             Label {
                 Layout.alignment: Qt.AlignRight
-                text: qsTr("PSN Account-ID:")
+                text: qsTr("PSN ID:")
                 visible: accountId.visible
             }
 
             C.TextField {
                 id: accountId
                 visible: !ps4_7.checked
-                placeholderText: qsTr("base64")
-                Layout.preferredWidth: 400 - loginButton.width - 10
+                placeholderText: qsTr("19位的PSN ID")
+                Layout.preferredWidth: 400 
                 KeyNavigation.priority: {
                     if(readOnly)
                         KeyNavigation.BeforeItem
@@ -84,47 +84,9 @@ DialogView {
                         KeyNavigation.AfterItem
                 }
                 KeyNavigation.up: hostField
-                KeyNavigation.right: loginButton
                 KeyNavigation.down: pin
 
-                C.Button {
-                    id: loginButton
-                    anchors {
-                        left: parent.right
-                        verticalCenter: parent.verticalCenter
-                        leftMargin: 10
-                    }
-                    topPadding: 18
-                    bottomPadding: 18
-                    text: qsTr("PSN Login")
-                    onClicked: stack.push(psnLoginDialogComponent, {login: true, callback: (id) => accountId.text = id})
-                    visible: !Chiaki.settings.psnAccountId
-                    Material.roundedScale: Material.SmallScale
-                    KeyNavigation.priority: KeyNavigation.BeforeItem
-                    KeyNavigation.up: hostField
-                    KeyNavigation.left: accountId
-                    KeyNavigation.right: lookupButton
-                    KeyNavigation.down: pin
-                }
-                C.Button {
-                    id: lookupButton
-                    anchors {
-                        left: loginButton.right
-                        verticalCenter: parent.verticalCenter
-                        leftMargin: 10
-                    }
-                    topPadding: 18
-                    bottomPadding: 18
-                    text: qsTr("Public Lookup")
-                    onClicked: stack.push(psnLoginDialogComponent, {login: false, callback: (id) => accountId.text = id})
-                    visible: !Chiaki.settings.psnAccountId
-                    Material.roundedScale: Material.SmallScale
-                    KeyNavigation.up: hostField
-                    KeyNavigation.priority: KeyNavigation.BeforeItem
-                    KeyNavigation.left: loginButton
-                    KeyNavigation.right: lookupButton
-                    KeyNavigation.down: pin
-                }
+
             }
 
             Label {
