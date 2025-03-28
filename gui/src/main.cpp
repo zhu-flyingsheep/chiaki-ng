@@ -56,6 +56,10 @@ int RunMain(QGuiApplication &app, Settings *settings, bool exit_app_on_stream_ex
 
 int real_main(int argc, char *argv[])
 {
+	// 打印所有命令行参数
+    for (int i = 0; i < argc; ++i) {
+        qDebug() << "Argument" << i << ":" << argv[i];
+    }
 	qRegisterMetaType<DiscoveryHost>();
 	qRegisterMetaType<RegisteredHost>();
 	qRegisterMetaType<HostMAC>();
@@ -186,61 +190,18 @@ int real_main(int argc, char *argv[])
 	}
 	if(args[0] == "stream")
 	{
-		if(args.length() < 2)
-			parser.showHelp(1);
+
 
 		//QString host = args[sizeof(args) -1]; //the ip is always the last param for stream
-		QString host = args[args.size()-1];
-		QByteArray morning;
-		QByteArray regist_key;
+		QString host = "192.168.2.26";
+        // 注意这里需要显式指定字节数，否则遇到 '\0' 会被截断
+		QByteArray morning("\xa9\xben\xf0\xbf\x87?\x1b\x84\xe1\x1f\xf3W\x82\xc7\x06", 16);
+		QByteArray regist_key("876c0c48\0\0\0\0\0\0\0\0", 16);
+
 		QString initial_login_passcode;
 		ChiakiTarget target = CHIAKI_TARGET_PS4_10;
 
-		if(parser.value(regist_key_option).isEmpty() && parser.value(morning_option).isEmpty())
-		{
-			if(args.length() < 3)
-				parser.showHelp(1);
 
-			bool found = false;
-			for(const auto &temphost : settings.GetRegisteredHosts())
-			{
-				if(temphost.GetServerNickname() == args[1])
-				{
-					found = true;
-					morning = temphost.GetRPKey();
-					regist_key = temphost.GetRPRegistKey();
-					target = temphost.GetTarget();
-					break;
-				}
-			}
-			if(!found)
-			{
-				printf("No configuration found for '%s'\n", args[1].toLocal8Bit().constData());
-				return 1;
-			}
-		}
-		else
-		{
-			// TODO: explicit option for target
-			regist_key = parser.value(regist_key_option).toUtf8();
-			if(regist_key.length() > sizeof(ChiakiConnectInfo::regist_key))
-			{
-				printf("Given regist key is too long (expected size <=%llu, got %" PRIdQSIZETYPE")\n",
-					(unsigned long long)sizeof(ChiakiConnectInfo::regist_key),
-					regist_key.length());
-				return 1;
-			}
-			regist_key += QByteArray(sizeof(ChiakiConnectInfo::regist_key) - regist_key.length(), 0);
-			morning = QByteArray::fromBase64(parser.value(morning_option).toUtf8());
-			if(morning.length() != sizeof(ChiakiConnectInfo::morning))
-			{
-				printf("Given morning has invalid size (expected %llu, got %" PRIdQSIZETYPE")\n",
-					(unsigned long long)sizeof(ChiakiConnectInfo::morning),
-					morning.length());
-				printf("Given morning has invalid size (expected %llu)", (unsigned long long)sizeof(ChiakiConnectInfo::morning));
-				return 1;
-			}
-		}
 		if ((parser.isSet(stretch_option) && (parser.isSet(zoom_option) || parser.isSet(fullscreen_option))) || (parser.isSet(zoom_option) && parser.isSet(fullscreen_option)))
 		{
 			printf("Must choose between fullscreen, zoom or stretch option.");
