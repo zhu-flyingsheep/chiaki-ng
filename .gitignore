@@ -39,3 +39,6 @@ chiaki.conf
 .cache/
 *.vscode
 site/
+CMakeLists.txt
+gui/CMakeLists.txt
+lib/CMakeLists.txt
