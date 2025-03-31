@@ -25,6 +25,9 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_discovery_service_init(ChiakiDiscoveryServi
 	service->log = log;
 	service->options = *options;
 	service->ping_index = 0;
+	CHIAKI_LOGE(service->log, "options->hosts_max: %zu", service->options.hosts_max);
+	CHIAKI_LOGE(service->log, "options->host_drop_pings: %zu", service->options.host_drop_pings);
+	CHIAKI_LOGE(service->log, "options->ping_ms: %zu", service->options.ping_ms);
 
 	service->hosts = calloc(service->options.hosts_max, sizeof(ChiakiDiscoveryHost));
 	if(!service->hosts)
