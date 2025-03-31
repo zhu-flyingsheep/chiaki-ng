@@ -27,7 +27,15 @@ typedef uint16_t chiaki_unaligned_uint16_t;
 typedef int16_t chiaki_unaligned_int16_t;
 #endif
 
-#define CHIAKI_EXPORT
+#ifdef _WIN32
+    #ifdef CHIAKI_LIB_EXPORTS  // 动态库编译时定义此宏
+        #define CHIAKI_EXPORT __declspec(dllexport)
+    #else
+        #define CHIAKI_EXPORT __declspec(dllimport)
+    #endif
+#else
+    #define CHIAKI_EXPORT  // 非 Windows 平台无需特殊处理
+#endif
 
 #ifdef _WIN32
 #define CHIAKI_SSIZET_TYPE int
