@@ -166,7 +166,7 @@ jobs:
           -G Ninja `
           -DCMAKE_TOOLCHAIN_FILE:STRING="vcpkg/scripts/buildsystems/vcpkg.cmake" `
           -DCMAKE_EXPORT_COMPILE_COMMANDS:BOOL=TRUE `
-          -DCMAKE_BUILD_TYPE=Release `
+          -DCMAKE_BUILD_TYPE=Debug `
           -DCHIAKI_ENABLE_CLI=OFF `
           -DCHIAKI_GUI_ENABLE_SDL_GAMECONTROLLER=ON `
           -DCHIAKI_ENABLE_STEAMDECK_NATIVE=OFF `
@@ -176,12 +176,17 @@ jobs:
 
       - name: Build chiaki-ng
         run: |
-          cmake --build build --config Release --clean-first --target chiaki
+          cmake --build build --config Debug --clean-first --target chiaki
+          
+      - name: List github.workspace
+        run: |
+          ls -R build  # 递归列出 build 目录内容
 
       - name: Prepare Qt deployment package
         run: |
           mkdir chiaki-ng-Win
           cp build\gui\chiaki.exe chiaki-ng-Win
+          cp build\lib\chiaki.dll chiaki-ng-Win  #  复制dell
           cp scripts\qtwebengine_import.qml gui\src\qml\
           cp "${{ github.workspace }}\vcpkg_installed\${{ env.triplet }}\bin\libcrypto-*-x64.dll" chiaki-ng-Win
           cp "${{ github.workspace }}\vcpkg_installed\${{ env.triplet }}\bin\libssl-*-x64.dll" chiaki-ng-Win
@@ -200,7 +205,20 @@ jobs:
           cp "${{ github.workspace }}\${{ env.dep_folder }}\bin\libplacebo-*.dll" chiaki-ng-Win
           cp "${{ github.workspace }}\${{ env.dep_folder }}\bin\shaderc_shared.dll" chiaki-ng-Win
           cp "${{ github.workspace }}\${{ env.dep_folder }}\bin\spirv-cross-c-shared.dll" chiaki-ng-Win
-          windeployqt.exe --no-translations --qmldir=gui\src\qml --release chiaki-ng-Win\chiaki.exe
+          
+          cp build\lib\chiaki.pdb chiaki-ng-Win  #  复制pdb
+          cp "${{ github.workspace }}\vcpkg_installed\${{ env.triplet }}\bin\libcrypto-*-x64.pdb" chiaki-ng-Win
+          cp "${{ github.workspace }}\vcpkg_installed\${{ env.triplet }}\bin\libssl-*-x64.pdb" chiaki-ng-Win
+          cp "${{ github.workspace }}\vcpkg_installed\${{ env.triplet }}\bin\SDL2.pdb" chiaki-ng-Win
+          cp "${{ github.workspace }}\vcpkg_installed\${{ env.triplet }}\bin\hidapi.pdb" chiaki-ng-Win
+          cp "${{ github.workspace }}\vcpkg_installed\${{ env.triplet }}\bin\fftw3.pdb" chiaki-ng-Win
+          cp "${{ github.workspace }}\vcpkg_installed\${{ env.triplet }}\bin\opus.pdb" chiaki-ng-Win
+          cp "${{ github.workspace }}\vcpkg_installed\${{ env.triplet }}\bin\libspeexdsp.pdb" chiaki-ng-Win
+          cp "${{ github.workspace }}\vcpkg_installed\${{ env.triplet }}\bin\lcms2.pdb" chiaki-ng-Win
+          cp "${{ github.workspace }}\vcpkg_installed\${{ env.triplet }}\bin\miniupnpc.pdb" chiaki-ng-Win
+          cp "${{ github.workspace }}\vcpkg_installed\${{ env.triplet }}\bin\json-c.pdb" chiaki-ng-Win
+  
+          windeployqt.exe --no-translations --qmldir=gui\src\qml --debug chiaki-ng-Win\chiaki.exe
 
       - name: Package chiaki-ng
         run: |
