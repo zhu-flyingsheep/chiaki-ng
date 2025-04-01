@@ -239,22 +239,6 @@ jobs:
           if-no-files-found: error
           release-upload-url: ${{ needs.create-release.outputs.upload_url }}
 
-      - name: Compile .ISS to .EXE Installer
-        uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
-        with:
-          path: "scripts/chiaki-ng.iss"
-          options: /O+
 
-      - name: Rename installer
-        run: |
-          cp chiaki-ng-windows-installer.exe chiaki-ng-win_x64-VC-installer.exe
-
-      - name: Upload chiaki-ng Artifact
-        uses: nanoufo/action-upload-artifacts-and-release-assets@v2
-        with:
-          path: chiaki-ng-win_x64-VC-installer.exe
-          upload-release-files: true
-          if-no-files-found: error
-          release-upload-url: ${{ needs.create-release.outputs.upload_url }}
 
   
