@@ -30,7 +30,10 @@ int main(int argc, char *argv[]) { return real_main(argc, argv); }
 #include <QCommandLineParser>
 #include <QMap>
 #include <QSurfaceFormat>
-
+#include <QFile>
+#include <QTextStream>
+#include <QDateTime>
+#include <QMutex>
 Q_DECLARE_METATYPE(ChiakiLogLevel)
 Q_DECLARE_METATYPE(ChiakiRegistEventType)
 
@@ -53,6 +56,7 @@ static const QMap<QString, CLICommand> cli_commands = {
 
 int RunStream(QGuiApplication &app, const StreamSessionConnectInfo &connect_info);
 int RunMain(QGuiApplication &app, Settings *settings, bool exit_app_on_stream_exit);
+void myMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg);
 
 int real_main(int argc, char *argv[])
 {
@@ -179,8 +183,15 @@ int real_main(int argc, char *argv[])
 	if(!parser.isSet(profile_option))
 		use_alt_settings = true;
 
-	if(args.length() == 0)
+	if(args.length() == 0){
+		// 安装自定义日志处理函数
+		qInstallMessageHandler(myMessageHandler);
+
+		// 测试日志
+		qDebug() << "T===========================================DEBUG";
 		return RunMain(app, use_alt_settings ? &alt_settings : &settings, exit_app_on_stream_exit);
+
+	}
 
 	if(args[0] == "list")
 	{
@@ -275,4 +286,38 @@ int RunStream(QGuiApplication &app, const StreamSessionConnectInfo &connect_info
 	QmlMainWindow main_window(connect_info);
 	main_window.show();
 	return app.exec();
+}
+
+void myMessageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg) {
+    // 加锁确保多线程安全
+    static QMutex mutex;
+    QMutexLocker locker(&mutex);
+
+	QString logPath = QDir::homePath() + "/logs/app.log"; // 例如 /home/ubuntu/logs/app.log
+
+    // 打开日志文件（追加模式）
+    QFile logFile(logPath);
+    if (!logFile.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Text)) {
+        return;
+    }
+
+    // 格式化日志内容
+    QString logTime = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz");
+    QString logType;
+    switch (type) {
+        case QtDebugMsg:    logType = "DEBUG"; break;
+        case QtInfoMsg:     logType = "INFO"; break;
+        case QtWarningMsg:  logType = "WARNING"; break;
+        case QtCriticalMsg: logType = "CRITICAL"; break;
+        case QtFatalMsg:    logType = "FATAL"; break;
+    }
+
+    // 写入文件
+    QTextStream stream(&logFile);
+    stream << QString("[%1] [%2] %3\n").arg(logTime, logType, msg);
+
+    // 可选：同时输出到控制台
+    fprintf(stderr, "[%s] [%s] %s\n", logTime.toUtf8().constData(), logType.toUtf8().constData(), msg.toUtf8().constData());
+
+    logFile.close();
 }

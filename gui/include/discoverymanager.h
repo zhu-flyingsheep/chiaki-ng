@@ -36,6 +36,8 @@ struct ManualService
 	ChiakiDiscoveryService service;
 };
 
+void service_log_cb(ChiakiLogLevel level, const char *msg, void *user);
+
 class Settings;
 
 class DiscoveryManager : public QObject

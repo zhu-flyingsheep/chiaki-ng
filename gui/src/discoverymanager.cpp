@@ -38,7 +38,7 @@ static void DiscoveryServiceHostsManualCallback(ChiakiDiscoveryHost *hosts, size
 
 DiscoveryManager::DiscoveryManager(QObject *parent) : QObject(parent)
 {
-	chiaki_log_init(&log, CHIAKI_LOG_ALL & ~CHIAKI_LOG_VERBOSE, chiaki_log_cb_print, nullptr);
+	chiaki_log_init(&log, CHIAKI_LOG_ALL & ~CHIAKI_LOG_VERBOSE, service_log_cb, nullptr);
 
 	service_active = false;
 	service_active_ipv6 = false;
@@ -51,6 +51,12 @@ DiscoveryManager::~DiscoveryManager()
 	if(service_active_ipv6)
 		chiaki_discovery_service_fini(&service_ipv6);
 	qDeleteAll(manual_services);
+}
+
+ void service_log_cb(ChiakiLogLevel level, const char *msg, void *user)
+{
+	qDebug() << "service_log_cb=========" << msg;
+
 }
 
 void DiscoveryManager::SetActive(bool active)
