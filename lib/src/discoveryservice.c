@@ -8,6 +8,8 @@
 #include <stdio.h>
 #ifdef _WIN32
 #include <ws2tcpip.h>
+#include <winsock2.h>
+#include <iphlpapi.h>
 #else
 #include <netinet/in.h>
 #include <netdb.h>
