@@ -55,7 +55,7 @@ DiscoveryManager::~DiscoveryManager()
 
  void service_log_cb(ChiakiLogLevel level, const char *msg, void *user)
 {
-	qDebug() << "service_log_cb=========" << msg;
+	qDebug() << "service_log_cb:" << msg;
 
 }
 
@@ -206,6 +206,7 @@ void DiscoveryManager::SetActive(bool active)
 			}
 			else
 				CHIAKI_LOGW(&log, "No external broadcast addresses found!");
+			qDebug() << "调用了chiaki_discovery_service_init==1";	
 			ChiakiErrorCode err = chiaki_discovery_service_init(&service, &options, &log);
 			if(options.broadcast_addrs)
 				free(options.broadcast_addrs);
@@ -234,6 +235,7 @@ void DiscoveryManager::SetActive(bool active)
 			options_ipv6.send_addr = &addr_ipv6;
 			options_ipv6.send_addr_size = sizeof(in_addr_ipv6);
 			options_ipv6.send_host = nullptr;
+			qDebug() << "调用了chiaki_discovery_service_init==2";	
 
 			ChiakiErrorCode err = chiaki_discovery_service_init(&service_ipv6, &options_ipv6, &log);
 			if(err != CHIAKI_ERR_SUCCESS)
@@ -373,6 +375,7 @@ void DiscoveryManager::UpdateManualServices()
 			options.send_addr = &addr;
 			options.send_addr_size = sizeof(struct sockaddr_in);
 		}
+		qDebug() << "调用了chiaki_discovery_service_init==3";	
 		ChiakiErrorCode err = chiaki_discovery_service_init(&s->service, &options, &log);
 		if(err != CHIAKI_ERR_SUCCESS)
 		{
