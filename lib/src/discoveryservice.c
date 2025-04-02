@@ -49,25 +49,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_discovery_service_init(ChiakiDiscoveryServi
 	service->options = *options;
 	service->ping_index = 0;
 
-	CHIAKI_LOGE(service->log, "options->hosts_max: %zu", service->options.hosts_max);
-	CHIAKI_LOGE(service->log, "options->host_drop_pings: %zu", service->options.host_drop_pings);
-	CHIAKI_LOGE(service->log, "options->ping_ms: %zu", service->options.ping_ms);
 
-
-    CHIAKI_LOGE(service->log, "options->ping_initial_ms: %zu\n", (service->options.ping_initial_ms));
-
-    CHIAKI_LOGE(service->log, "options->send_addr: %s\n", print_sockaddr_storage(service->options.send_addr));
-    CHIAKI_LOGE(service->log, "options->send_addr_size: %zu\n", service->options.send_addr_size);
-
-    CHIAKI_LOGE(service->log, "options->broadcast_addrs:\n");
-    for (size_t i = 0; i < service->options.broadcast_num; i++) {
-        CHIAKI_LOGE(service->log, "  [%zu]: %s\n", i, print_sockaddr_storage(&service->options.broadcast_addrs[i]));
-    }
-    CHIAKI_LOGE(service->log, "options->broadcast_num: %zu\n", service->options.broadcast_num);
-
-    CHIAKI_LOGE(service->log, "options->send_host: %s\n", service->options.send_host ? service->options.send_host : "NULL");
-    CHIAKI_LOGE(service->log, "options->cb: %p\n", (service->options.cb));
-    CHIAKI_LOGE(service->log, "options->cb_user: %p\n", service->options.cb_user);
 
 	service->hosts = calloc(service->options.hosts_max, sizeof(ChiakiDiscoveryHost));
 	if(!service->hosts)
@@ -128,7 +110,25 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_discovery_service_init(ChiakiDiscoveryServi
 			goto error_send_addr;
 		}
 	}
+	CHIAKI_LOGE(service->log, "options->hosts_max: %zu", service->options.hosts_max);
+	CHIAKI_LOGE(service->log, "options->host_drop_pings: %zu", service->options.host_drop_pings);
+	CHIAKI_LOGE(service->log, "options->ping_ms: %zu", service->options.ping_ms);
 
+
+    CHIAKI_LOGE(service->log, "options->ping_initial_ms: %zu\n", (service->options.ping_initial_ms));
+
+    CHIAKI_LOGE(service->log, "options->send_addr: %s\n", print_sockaddr_storage(service->options.send_addr));
+    CHIAKI_LOGE(service->log, "options->send_addr_size: %zu\n", service->options.send_addr_size);
+
+    CHIAKI_LOGE(service->log, "options->broadcast_addrs:\n");
+    for (size_t i = 0; i < service->options.broadcast_num; i++) {
+        CHIAKI_LOGE(service->log, "  [%zu]: %s\n", i, print_sockaddr_storage(&service->options.broadcast_addrs[i]));
+    }
+    CHIAKI_LOGE(service->log, "options->broadcast_num: %zu\n", service->options.broadcast_num);
+
+    CHIAKI_LOGE(service->log, "options->send_host: %s\n", service->options.send_host ? service->options.send_host : "NULL");
+    CHIAKI_LOGE(service->log, "options->cb: %p\n", (service->options.cb));
+    CHIAKI_LOGE(service->log, "options->cb_user: %p\n", service->options.cb_user);
 	err = chiaki_discovery_init(&service->discovery, log, ((struct sockaddr *)service->options.send_addr)->sa_family);
 	if(err != CHIAKI_ERR_SUCCESS)
 		goto error_send_addr;
