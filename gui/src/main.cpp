@@ -186,9 +186,9 @@ int real_main(int argc, char *argv[])
 	if(args.length() == 0){
 		// 安装自定义日志处理函数
 		qInstallMessageHandler(myMessageHandler);
+		qDEBUG() << "这是日志测试信息";
 
 		// 测试日志
-		qDebug() << "T===========================================DEBUG";
 		return RunMain(app, use_alt_settings ? &alt_settings : &settings, exit_app_on_stream_exit);
 
 	}
