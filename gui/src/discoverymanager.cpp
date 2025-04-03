@@ -38,8 +38,8 @@ static void DiscoveryServiceHostsManualCallback(ChiakiDiscoveryHost *hosts, size
 
 DiscoveryManager::DiscoveryManager(QObject *parent) : QObject(parent)
 {
-	chiaki_log_init(&log, CHIAKI_LOG_ALL & ~CHIAKI_LOG_VERBOSE, service_log_cb, nullptr);
-
+	// chiaki_log_init(&log, CHIAKI_LOG_ALL & ~CHIAKI_LOG_VERBOSE, service_log_cb, nullptr);
+	chiaki_log_init(&log, CHIAKI_LOG_ALL , service_log_cb, nullptr);
 	service_active = false;
 	service_active_ipv6 = false;
 }

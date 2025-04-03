@@ -380,6 +380,8 @@ static void discovery_service_host_received(ChiakiDiscoveryHost *host, void *use
 		return;
 	}
 	CHIAKI_LOGV(service->log, "Discovery Service Received host with id %s", host->host_id);
+	CHIAKI_LOGV(service->log, "Discovery Service Received host with host_name %s", host->host_name);
+	CHIAKI_LOGV(service->log, "Discovery Service Received host with host_addr %s", host->host_addr);
 
 	bool change = false;
 
