@@ -268,12 +268,14 @@ static void discovery_service_ping(ChiakiDiscoveryService *service)
 		service->options.send_host = NULL;
 	}
 
-	CHIAKI_LOGI(service->log, "Discovery Service sending ping");
 	CHIAKI_LOGV(service->log, "Discovery Service sending ping");
 	ChiakiDiscoveryPacket packet = { 0 };
 	bool send_extra_broadcast = false;
 	packet.cmd = CHIAKI_DISCOVERY_CMD_SRCH;
 	packet.protocol_version = CHIAKI_DISCOVERY_PROTOCOL_VERSION_PS4;
+
+	CHIAKI_LOGI(service->log, "sa_family: %d", ((struct sockaddr *)service->options.send_addr)->sa_family);
+
 	if(((struct sockaddr *)service->options.send_addr)->sa_family == AF_INET)
 	{
 		((struct sockaddr_in *)service->options.send_addr)->sin_port = htons(CHIAKI_DISCOVERY_PORT_PS4);
