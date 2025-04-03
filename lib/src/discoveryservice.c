@@ -268,6 +268,7 @@ static void discovery_service_ping(ChiakiDiscoveryService *service)
 		service->options.send_host = NULL;
 	}
 
+	CHIAKI_LOGI(service->log, "Discovery Service sending ping");
 	CHIAKI_LOGV(service->log, "Discovery Service sending ping");
 	ChiakiDiscoveryPacket packet = { 0 };
 	bool send_extra_broadcast = false;
