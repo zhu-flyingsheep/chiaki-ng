@@ -113,8 +113,10 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_discovery_service_init(ChiakiDiscoveryServi
 		}
 	}
 
-	CHIAKI_LOGE(service->log, "Size of sockaddr_in: %zu bytes", sizeof(sockaddr_in));
-	CHIAKI_LOGE(service->log, "Size of sockaddr_storage: %zu bytes\n", sizeof(sockaddr_storage));
+	CHIAKI_LOGE(service->log, "Size of options: %zu bytes", sizeof(options));
+	CHIAKI_LOGE(service->log, "Size of sockaddr_storage: %zu bytes", sizeof(struct sockaddr_storage));
+	CHIAKI_LOGE(service->log, "Size of options->send_addr: %zu bytes\n", sizeof(options->send_addr));
+	CHIAKI_LOGE(service->log, "Size of options->broadcast_addrs: %zu bytes\n", sizeof(options->broadcast_addrs));
 
 	CHIAKI_LOGE(service->log, "options->hosts_max: %zu", service->options.hosts_max);
 	CHIAKI_LOGE(service->log, "options->host_drop_pings: %zu", service->options.host_drop_pings);

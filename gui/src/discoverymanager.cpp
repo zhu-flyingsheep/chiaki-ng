@@ -207,6 +207,11 @@ void DiscoveryManager::SetActive(bool active)
 			else
 				CHIAKI_LOGW(&log, "No external broadcast addresses found!");
 			qDebug() << "调用了chiaki_discovery_service_init==1";	
+
+			qDebug() << "Size of sockaddr_in: " << sizeof(sockaddr_in) << " bytes";
+			qDebug() << "Size of sockaddr_in: " << sizeof(sockaddr_storage) << " bytes";
+
+
 			ChiakiErrorCode err = chiaki_discovery_service_init(&service, &options, &log);
 			if(options.broadcast_addrs)
 				free(options.broadcast_addrs);
