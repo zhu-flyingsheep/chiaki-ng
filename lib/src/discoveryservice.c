@@ -305,7 +305,10 @@ static void discovery_service_ping(ChiakiDiscoveryService *service)
 				if (!inet_ntop(((struct sockaddr_in *)(&service->options.broadcast_addrs[i]))->sin_family, &(((struct sockaddr_in *)(&service->options.broadcast_addrs[i]))->sin_addr), addr_string, sizeof(addr_string)))
 					CHIAKI_LOGE(service->log, "Discovery Service error with inet_ntop");
 				else
+				{
 					// CHIAKI_LOGV(service->log, "Discovery Service pinged %s", addr_string);
+
+				}
 			}
 		}
 	}
