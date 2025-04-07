@@ -452,11 +452,9 @@ rzcon:
 
 static void discovery_service_report_state(ChiakiDiscoveryService *service)
 {
-	CHIAKI_LOGI(service->log, "discovery_service_report_state=================");
 	// service->state_mutex must be locked
 	if(service->options.cb){
 		service->options.cb(service->hosts, service->hosts_count, service->options.cb_user);
-		CHIAKI_LOGI(service->log, "ChiakiDiscoveryServiceCb=================");
 
 	}
 }
