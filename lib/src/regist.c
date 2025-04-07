@@ -276,6 +276,7 @@ static void *regist_thread_func(void *user)
 	chiaki_socket_t sock = CHIAKI_INVALID_SOCKET;
 	uint16_t remote_counter = 0;
 	struct addrinfo *addrinfos;
+	CHIAKI_LOGI(regist->log, "PSN Regist: %s", psn ? "true" : "false");
 	if(psn)
 	{
 		CHIAKI_LOGI(regist->log, "REGIST - Starting RUDP session");
@@ -310,8 +311,12 @@ static void *regist_thread_func(void *user)
 		else
 			hints.ai_family = AF_INET;
 		int r = getaddrinfo(regist->info.host, NULL, &hints, &addrinfos);
+		CHIAKI_LOGI(regist->log, "ipv6: %s", ipv6 ? "true" : "false");
 		if(r != 0)
 		{
+	
+			CHIAKI_LOGE(regist->log, "getaddrinfo: %s\n", gai_strerror(r));
+
 			CHIAKI_LOGE(regist->log, "Regist failed to getaddrinfo on %s", regist->info.host);
 			goto fail;
 		}
