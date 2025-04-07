@@ -274,7 +274,6 @@ static void discovery_service_ping(ChiakiDiscoveryService *service)
 	packet.cmd = CHIAKI_DISCOVERY_CMD_SRCH;
 	packet.protocol_version = CHIAKI_DISCOVERY_PROTOCOL_VERSION_PS4;
 
-	CHIAKI_LOGI(service->log, "sa_family: %d", ((struct sockaddr *)service->options.send_addr)->sa_family);
 
 	if(((struct sockaddr *)service->options.send_addr)->sa_family == AF_INET)
 	{
