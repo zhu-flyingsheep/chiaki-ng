@@ -72,6 +72,7 @@ QmlRegist::QmlRegist(const ChiakiRegistInfo &regist_info, uint32_t log_mask, QOb
 
 void QmlRegist::log_cb(ChiakiLogLevel level, const char *msg, void *user)
 {
+    qDebug() << "qml_log_cb:" << msg;
     chiaki_log_cb_print(level, msg, nullptr);
     auto r = static_cast<QmlRegist*>(user);
     QMetaObject::invokeMethod(r, std::bind(&QmlRegist::log, r, level, QString::fromUtf8(msg)), Qt::QueuedConnection);
