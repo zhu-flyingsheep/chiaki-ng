@@ -42,7 +42,6 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_regist_start(ChiakiRegist *regist, ChiakiLo
 	CHIAKI_LOGI(log, "Regist PIN: %u", info->pin);
 	CHIAKI_LOGI(log, "Regist PSN ID: %s", info->psn_online_id ? info->psn_online_id : "null");
 	CHIAKI_LOGI(log, "Regist PSN Account ID: %zu", info->psn_account_id);
-	CHIAKI_LOGI(log, "Regist Target: %s", info->target);
 	CHIAKI_LOGI(log, "Regist Host: %s", info->host ? info->host : "null");
 	CHIAKI_LOGI(log, "Regist Broadcast: %s", info->broadcast ? "true" : "false");
 
