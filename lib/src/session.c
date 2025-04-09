@@ -205,8 +205,8 @@ void ChiakiConnectInfoToString(const ChiakiConnectInfo *info, char *buffer, size
     ChiakiConnectVideoProfileToString(&info->video_profile, videoProfileBuffer, sizeof(videoProfileBuffer));
     strncat(buffer, videoProfileBuffer, bufferSize - strlen(buffer));
     snprintf(buffer + strlen(buffer), bufferSize - strlen(buffer), 
-             "  Video Profile Auto Downgrade: %s\n  Enable Keyboard: %s\n  Enable DualSense: %s\n  Audio Video Disabled: %d\n  Auto Regist: %s\n  Holepunch Session Handle: %p\n  Rudp Sock: %p\n  PSN Account ID: ", 
-             info->video_profile_auto_downgrade? "Yes" : "No", info->enable_keyboard? "Yes" : "No", info->enable_dualsense? "Yes" : "No", info->audio_video_disabled, info->auto_regist? "Yes" : "No", info->holepunch_session.handle, info->rudp_sock);
+             "  Video Profile Auto Downgrade: %s\n  Enable Keyboard: %s\n  Enable DualSense: %s\n  Audio Video Disabled: %d\n  Auto Regist: %s\n   Rudp Sock: %p\n  PSN Account ID: ", 
+             info->video_profile_auto_downgrade? "Yes" : "No", info->enable_keyboard? "Yes" : "No", info->enable_dualsense? "Yes" : "No", info->audio_video_disabled, info->auto_regist? "Yes" : "No", info->rudp_sock);
     for (int i = 0; i < 0x10; i++) {
         char hexStr[3];
         snprintf(hexStr, sizeof(hexStr), "%02x ", info->psn_account_id[i]);
@@ -219,7 +219,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_session_init(ChiakiSession *session, Chiaki
 	ChiakiLog *log)
 {
 	char buffer[4096];
-    ChiakiConnectInfoToString(&connect_info, buffer, sizeof(buffer));
+    ChiakiConnectInfoToString(connect_info, buffer, sizeof(buffer));
 	CHIAKI_LOGI(log, "ChiakiConnectInfo: %s", buffer);
 
 	memset(session, 0, sizeof(ChiakiSession));
