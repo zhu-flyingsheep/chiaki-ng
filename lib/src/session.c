@@ -171,9 +171,57 @@ CHIAKI_EXPORT const char *chiaki_quit_reason_string(ChiakiQuitReason reason)
 	}
 }
 
+// 将 ChiakiConnectVideoProfile 结构体转换为字符串
+void ChiakiConnectVideoProfileToString(const ChiakiConnectVideoProfile *profile, char *buffer, size_t bufferSize) {
+    snprintf(buffer, bufferSize, "Video Profile:\n  Width: %u\n  Height: %u\n  Max FPS: %u\n  Bitrate: %u\n  Codec: ", 
+             profile->width, profile->height, profile->max_fps, profile->bitrate);
+    switch (profile->codec) {
+        case CHIAKI_CODEC_H264:
+            strncat(buffer, "CHIAKI_CODEC_H264\n", bufferSize - strlen(buffer));
+            break;
+        // 可添加其他编解码器类型的处理
+        default:
+            strncat(buffer, "Unknown\n", bufferSize - strlen(buffer));
+            break;
+    }
+}
+
+// 将 ChiakiConnectInfo 结构体转换为字符串
+void ChiakiConnectInfoToString(const ChiakiConnectInfo *info, char *buffer, size_t bufferSize) {
+    snprintf(buffer, bufferSize, "ChiakiConnectInfo:\n  PS5: %s\n  Host: %s\n  Regist Key: ", 
+             info->ps5? "Yes" : "No", info->host);
+    for (int i = 0; i < 0x10; i++) {
+        char hexStr[3];
+        snprintf(hexStr, sizeof(hexStr), "%02x ", info->regist_key[i]);
+        strncat(buffer, hexStr, bufferSize - strlen(buffer));
+    }
+    strncat(buffer, "\n  Morning: ", bufferSize - strlen(buffer));
+    for (int i = 0; i < 0x10; i++) {
+        char hexStr[3];
+        snprintf(hexStr, sizeof(hexStr), "%02x ", info->morning[i]);
+        strncat(buffer, hexStr, bufferSize - strlen(buffer));
+    }
+    char videoProfileBuffer[1024];
+    ChiakiConnectVideoProfileToString(&info->video_profile, videoProfileBuffer, sizeof(videoProfileBuffer));
+    strncat(buffer, videoProfileBuffer, bufferSize - strlen(buffer));
+    snprintf(buffer + strlen(buffer), bufferSize - strlen(buffer), 
+             "  Video Profile Auto Downgrade: %s\n  Enable Keyboard: %s\n  Enable DualSense: %s\n  Audio Video Disabled: %d\n  Auto Regist: %s\n  Holepunch Session Handle: %p\n  Rudp Sock: %p\n  PSN Account ID: ", 
+             info->video_profile_auto_downgrade? "Yes" : "No", info->enable_keyboard? "Yes" : "No", info->enable_dualsense? "Yes" : "No", info->audio_video_disabled, info->auto_regist? "Yes" : "No", info->holepunch_session.handle, info->rudp_sock);
+    for (int i = 0; i < 0x10; i++) {
+        char hexStr[3];
+        snprintf(hexStr, sizeof(hexStr), "%02x ", info->psn_account_id[i]);
+        strncat(buffer, hexStr, bufferSize - strlen(buffer));
+    }
+    snprintf(buffer + strlen(buffer), bufferSize - strlen(buffer), "\n  Packet Loss Max: %f\n", info->packet_loss_max);
+}
+
 CHIAKI_EXPORT ChiakiErrorCode chiaki_session_init(ChiakiSession *session, ChiakiConnectInfo *connect_info,
 	ChiakiLog *log)
 {
+	char buffer[4096];
+    ChiakiConnectInfoToString(&connect_info, buffer, sizeof(buffer));
+	CHIAKI_LOGI(log, "ChiakiConnectInfo: %s", buffer);
+
 	memset(session, 0, sizeof(ChiakiSession));
 
 	session->log = log;

@@ -204,7 +204,7 @@ int real_main(int argc, char *argv[])
 
 
 		//QString host = args[sizeof(args) -1]; //the ip is always the last param for stream
-		QString host = "192.168.2.26";
+		QString host = "192.168.2.28";
         // 注意这里需要显式指定字节数，否则遇到 '\0' 会被截断
 		QByteArray morning("\xa9\xben\xf0\xbf\x87?\x1b\x84\xe1\x1f\xf3W\x82\xc7\x06", 16);
 		QByteArray regist_key("876c0c48\0\0\0\0\0\0\0\0", 16);

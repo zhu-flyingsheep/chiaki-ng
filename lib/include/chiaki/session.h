@@ -90,6 +90,9 @@ typedef struct chiaki_connect_info_t
 	double packet_loss_max;
 } ChiakiConnectInfo;
 
+// 声明 ChiakiConnectInfoToString 函数
+void ChiakiConnectInfoToString(const ChiakiConnectInfo *info, char *buffer, size_t bufferSize);
+
 
 typedef enum {
 	CHIAKI_QUIT_REASON_NONE,
