@@ -260,7 +260,7 @@ uint64_t to_ulonglong(const char *str, int *ok)
     return result;
 }
 
-CHIAKI_EXPORT bool regist_ps(const char *host, const char *psn_id, const char *pin, const char *cpin, bool broadcast, int target, ChiakiRegistCb cb, ChiakiLog *log,void *cb_user)
+CHIAKI_EXPORT bool regist_ps(const char *host, const char *psn_id, const char *pin, const char *cpin, bool broadcast, int target, ChiakiRegistCb cb, ChiakiLog *log, void *cb_user)
 {
     ChiakiRegistInfo info;
     memset(&info, 0, sizeof(ChiakiRegistInfo));
@@ -295,81 +295,92 @@ CHIAKI_EXPORT bool regist_ps(const char *host, const char *psn_id, const char *p
 
         info.psn_online_id = NULL;
     }
-    ChiakiRegist chiaki_regist;
-    ChiakiErrorCode result = chiaki_regist_start(&chiaki_regist, log, &info, cb, cb_user);
+
+    // 动态分配 ChiakiRegist 对象的内存
+    ChiakiRegist *chiaki_regist = (ChiakiRegist *)malloc(sizeof(ChiakiRegist));
+    if (chiaki_regist == NULL)
+    {
+        CHIAKI_LOGE(log, "malloc failed!");
+        return false;
+    }
+
+    ChiakiErrorCode result = chiaki_regist_start(chiaki_regist, log, &info, cb, cb_user);
     if (result != CHIAKI_ERR_SUCCESS)
     {
         char error_msg[256];
-        switch (result) {
-            case CHIAKI_ERR_UNKNOWN:
-                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_UNKNOWN");
-                break;
-            case CHIAKI_ERR_PARSE_ADDR:
-                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_PARSE_ADDR");
-                break;
-            case CHIAKI_ERR_THREAD:
-                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_THREAD");
-                break;
-            case CHIAKI_ERR_MEMORY:
-                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_MEMORY");
-                break;
-            case CHIAKI_ERR_OVERFLOW:
-                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_OVERFLOW");
-                break;
-            case CHIAKI_ERR_NETWORK:
-                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_NETWORK");
-                break;
-            case CHIAKI_ERR_CONNECTION_REFUSED:
-                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_CONNECTION_REFUSED");
-                break;
-            case CHIAKI_ERR_HOST_DOWN:
-                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_HOST_DOWN");
-                break;
-            case CHIAKI_ERR_HOST_UNREACH:
-                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_HOST_UNREACH");
-                break;
-            case CHIAKI_ERR_DISCONNECTED:
-                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_DISCONNECTED");
-                break;
-            case CHIAKI_ERR_INVALID_DATA:
-                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_INVALID_DATA");
-                break;
-            case CHIAKI_ERR_BUF_TOO_SMALL:
-                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_BUF_TOO_SMALL");
-                break;
-            case CHIAKI_ERR_MUTEX_LOCKED:
-                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_MUTEX_LOCKED");
-                break;
-            case CHIAKI_ERR_CANCELED:
-                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_CANCELED");
-                break;
-            case CHIAKI_ERR_TIMEOUT:
-                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_TIMEOUT");
-                break;
-            case CHIAKI_ERR_INVALID_RESPONSE:
-                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_INVALID_RESPONSE");
-                break;
-            case CHIAKI_ERR_INVALID_MAC:
-                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_INVALID_MAC");
-                break;
-            case CHIAKI_ERR_UNINITIALIZED:
-                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_UNINITIALIZED");
-                break;
-            case CHIAKI_ERR_FEC_FAILED:
-                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_FEC_FAILED");
-                break;
-            case CHIAKI_ERR_VERSION_MISMATCH:
-                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_VERSION_MISMATCH");
-                break;
-            case CHIAKI_ERR_HTTP_NONOK:
-                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_HTTP_NONOK");
-                break;
-            default:
-                snprintf(error_msg, sizeof(error_msg), "regist failed: %d", result);
+        switch (result)
+        {
+        case CHIAKI_ERR_UNKNOWN:
+            snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_UNKNOWN");
+            break;
+        case CHIAKI_ERR_PARSE_ADDR:
+            snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_PARSE_ADDR");
+            break;
+        case CHIAKI_ERR_THREAD:
+            snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_THREAD");
+            break;
+        case CHIAKI_ERR_MEMORY:
+            snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_MEMORY");
+            break;
+        case CHIAKI_ERR_OVERFLOW:
+            snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_OVERFLOW");
+            break;
+        case CHIAKI_ERR_NETWORK:
+            snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_NETWORK");
+            break;
+        case CHIAKI_ERR_CONNECTION_REFUSED:
+            snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_CONNECTION_REFUSED");
+            break;
+        case CHIAKI_ERR_HOST_DOWN:
+            snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_HOST_DOWN");
+            break;
+        case CHIAKI_ERR_HOST_UNREACH:
+            snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_HOST_UNREACH");
+            break;
+        case CHIAKI_ERR_DISCONNECTED:
+            snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_DISCONNECTED");
+            break;
+        case CHIAKI_ERR_INVALID_DATA:
+            snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_INVALID_DATA");
+            break;
+        case CHIAKI_ERR_BUF_TOO_SMALL:
+            snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_BUF_TOO_SMALL");
+            break;
+        case CHIAKI_ERR_MUTEX_LOCKED:
+            snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_MUTEX_LOCKED");
+            break;
+        case CHIAKI_ERR_CANCELED:
+            snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_CANCELED");
+            break;
+        case CHIAKI_ERR_TIMEOUT:
+            snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_TIMEOUT");
+            break;
+        case CHIAKI_ERR_INVALID_RESPONSE:
+            snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_INVALID_RESPONSE");
+            break;
+        case CHIAKI_ERR_INVALID_MAC:
+            snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_INVALID_MAC");
+            break;
+        case CHIAKI_ERR_UNINITIALIZED:
+            snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_UNINITIALIZED");
+            break;
+        case CHIAKI_ERR_FEC_FAILED:
+            snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_FEC_FAILED");
+            break;
+        case CHIAKI_ERR_VERSION_MISMATCH:
+            snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_VERSION_MISMATCH");
+            break;
+        case CHIAKI_ERR_HTTP_NONOK:
+            snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_HTTP_NONOK");
+            break;
+        default:
+            snprintf(error_msg, sizeof(error_msg), "regist failed: %d", result);
         }
         CHIAKI_LOGE(log, error_msg);
         return false;
-    }else{
+    }
+    else
+    {
         CHIAKI_LOGI(log, "regist success!");
     }
 
