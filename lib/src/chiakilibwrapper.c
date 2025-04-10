@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <arpa/inet.h>
+
 #ifdef _WIN32
 #include <winsock2.h>
 #include <iphlpapi.h>
@@ -15,6 +15,7 @@
 #include <netdb.h>
 #include <net/if.h>
 #include <ifaddrs.h>
+#include <arpa/inet.h>
 #endif
 
 #define PING_MS 500
