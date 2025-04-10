@@ -14,7 +14,7 @@ extern "C" {
 CHIAKI_EXPORT ChiakiErrorCode discovery_ps(ChiakiDiscoveryServiceCb cb, ChiakiLog *log);
 
 
-CHIAKI_EXPORT bool regist_ps(const char *host, const char *psn_id, const char *pin, const char *cpin, bool broadcast, int target, ChiakiRegistCb cb, ChiakiLog *log,void *cb_user);
+CHIAKI_EXPORT ChiakiRegist*  regist_ps(const char *host, const char *psn_id, const char *pin, const char *cpin, bool broadcast, int target, ChiakiRegistCb cb, ChiakiLog *log,void *cb_user);
 
 
 
