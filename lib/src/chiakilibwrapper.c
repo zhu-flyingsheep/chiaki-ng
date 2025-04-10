@@ -302,75 +302,75 @@ CHIAKI_EXPORT bool regist_ps(const char *host, const char *psn_id, const char *p
         char error_msg[256];
         switch (result) {
             case CHIAKI_ERR_UNKNOWN:
-                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_UNKNOWN");
+                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_UNKNOWN");
                 break;
             case CHIAKI_ERR_PARSE_ADDR:
-                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_PARSE_ADDR");
+                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_PARSE_ADDR");
                 break;
             case CHIAKI_ERR_THREAD:
-                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_THREAD");
+                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_THREAD");
                 break;
             case CHIAKI_ERR_MEMORY:
-                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_MEMORY");
+                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_MEMORY");
                 break;
             case CHIAKI_ERR_OVERFLOW:
-                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_OVERFLOW");
+                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_OVERFLOW");
                 break;
             case CHIAKI_ERR_NETWORK:
-                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_NETWORK");
+                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_NETWORK");
                 break;
             case CHIAKI_ERR_CONNECTION_REFUSED:
-                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_CONNECTION_REFUSED");
+                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_CONNECTION_REFUSED");
                 break;
             case CHIAKI_ERR_HOST_DOWN:
-                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_HOST_DOWN");
+                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_HOST_DOWN");
                 break;
             case CHIAKI_ERR_HOST_UNREACH:
-                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_HOST_UNREACH");
+                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_HOST_UNREACH");
                 break;
             case CHIAKI_ERR_DISCONNECTED:
-                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_DISCONNECTED");
+                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_DISCONNECTED");
                 break;
             case CHIAKI_ERR_INVALID_DATA:
-                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_INVALID_DATA");
+                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_INVALID_DATA");
                 break;
             case CHIAKI_ERR_BUF_TOO_SMALL:
-                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_BUF_TOO_SMALL");
+                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_BUF_TOO_SMALL");
                 break;
             case CHIAKI_ERR_MUTEX_LOCKED:
-                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_MUTEX_LOCKED");
+                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_MUTEX_LOCKED");
                 break;
             case CHIAKI_ERR_CANCELED:
-                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_CANCELED");
+                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_CANCELED");
                 break;
             case CHIAKI_ERR_TIMEOUT:
-                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_TIMEOUT");
+                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_TIMEOUT");
                 break;
             case CHIAKI_ERR_INVALID_RESPONSE:
-                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_INVALID_RESPONSE");
+                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_INVALID_RESPONSE");
                 break;
             case CHIAKI_ERR_INVALID_MAC:
-                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_INVALID_MAC");
+                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_INVALID_MAC");
                 break;
             case CHIAKI_ERR_UNINITIALIZED:
-                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_UNINITIALIZED");
+                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_UNINITIALIZED");
                 break;
             case CHIAKI_ERR_FEC_FAILED:
-                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_FEC_FAILED");
+                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_FEC_FAILED");
                 break;
             case CHIAKI_ERR_VERSION_MISMATCH:
-                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_VERSION_MISMATCH");
+                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_VERSION_MISMATCH");
                 break;
             case CHIAKI_ERR_HTTP_NONOK:
-                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_HTTP_NONOK");
+                snprintf(error_msg, sizeof(error_msg), "regist failed,error code: CHIAKI_ERR_HTTP_NONOK");
                 break;
             default:
-                snprintf(error_msg, sizeof(error_msg), "注册失败，未知错误码: %d", result);
+                snprintf(error_msg, sizeof(error_msg), "regist failed: %d", result);
         }
         CHIAKI_LOGE(log, error_msg);
         return false;
     }else{
-        CHIAKI_LOGI(log, "注册成功！");
+        CHIAKI_LOGI(log, "regist success!");
     }
 
     return true;
