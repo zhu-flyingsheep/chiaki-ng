@@ -1,5 +1,6 @@
 
 set(HEADER_FILES
+		include/chiaki/chiakilibwrapper.h
 		include/chiaki/session.h
 		include/chiaki/common.h
 		include/chiaki/sock.h
@@ -45,6 +46,7 @@ set(HEADER_FILES
 		include/chiaki/remote/rudpsendbuffer.h)
 
 set(SOURCE_FILES
+        src/chiakilibwrapper.c
 		src/common.c
 		src/sock.c
 		src/session.c
