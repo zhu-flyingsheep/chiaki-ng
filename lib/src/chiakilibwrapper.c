@@ -260,7 +260,7 @@ uint64_t to_ulonglong(const char *str, int *ok)
     return result;
 }
 
-CHIAKI_EXPORT bool regist_ps(const char *host, const char *psn_id, const char *pin, const char *cpin, bool broadcast, int target, ChiakiRegistCb cb, ChiakiLog *log, void *cb_user)
+CHIAKI_EXPORT ChiakiRegist* regist_ps(const char *host, const char *psn_id, const char *pin, const char *cpin, bool broadcast, int target, ChiakiRegistCb cb, ChiakiLog *log, void *cb_user)
 {
     ChiakiRegistInfo info;
     memset(&info, 0, sizeof(ChiakiRegistInfo));
@@ -285,7 +285,7 @@ CHIAKI_EXPORT bool regist_ps(const char *host, const char *psn_id, const char *p
             char message[256];
             snprintf(message, sizeof(message), "请检查psnID是否正确%d", CHIAKI_PSN_ACCOUNT_ID_SIZE);
             CHIAKI_LOGE(log, message);
-            return false;
+            return NULL;
         }
 
         for (int i = 0; i < CHIAKI_PSN_ACCOUNT_ID_SIZE; ++i)
@@ -301,12 +301,14 @@ CHIAKI_EXPORT bool regist_ps(const char *host, const char *psn_id, const char *p
     if (chiaki_regist == NULL)
     {
         CHIAKI_LOGE(log, "malloc failed!");
-        return false;
+        return NULL;
     }
 
     ChiakiErrorCode result = chiaki_regist_start(chiaki_regist, log, &info, cb, cb_user);
     if (result != CHIAKI_ERR_SUCCESS)
     {
+        chiaki_regist_fini(chiaki_regist);
+	    chiaki_regist_stop(chiaki_regist);
         char error_msg[256];
         switch (result)
         {
@@ -377,12 +379,14 @@ CHIAKI_EXPORT bool regist_ps(const char *host, const char *psn_id, const char *p
             snprintf(error_msg, sizeof(error_msg), "regist failed: %d", result);
         }
         CHIAKI_LOGE(log, error_msg);
-        return false;
+        return NULL;
     }
     else
     {
         CHIAKI_LOGI(log, "regist success!");
     }
 
-    return true;
+    return chiaki_regist;
 }
+
+
