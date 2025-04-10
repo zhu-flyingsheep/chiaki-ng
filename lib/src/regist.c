@@ -39,11 +39,12 @@ static ChiakiErrorCode regist_parse_response_payload(ChiakiRegist *regist, Chiak
 CHIAKI_EXPORT ChiakiErrorCode chiaki_regist_start(ChiakiRegist *regist, ChiakiLog *log, const ChiakiRegistInfo *info, ChiakiRegistCb cb, void *cb_user)
 {
 
+	CHIAKI_LOGE(log, "Regist Host: %s", info->host ? info->host : "null");
+
+	CHIAKI_LOGE(log, "Regist Broadcast: %s", info->broadcast ? "true" : "false");
+	CHIAKI_LOGE(log, "Regist PSN Account ID: %zu", info->psn_account_id);
 	CHIAKI_LOGE(log, "Regist PIN: %u", info->pin);
 	CHIAKI_LOGE(log, "Regist PSN ID: %s", info->psn_online_id ? info->psn_online_id : "null");
-	CHIAKI_LOGE(log, "Regist PSN Account ID: %zu", info->psn_account_id);
-	CHIAKI_LOGE(log, "Regist Host: %s", info->host ? info->host : "null");
-	CHIAKI_LOGE(log, "Regist Broadcast: %s", info->broadcast ? "true" : "false");
 
 
 

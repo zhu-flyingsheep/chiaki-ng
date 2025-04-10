@@ -23,12 +23,12 @@
 #define DROP_PINGS 3
 
 // 假设的全局变量
-ChiakiDiscoveryService service ;
-ChiakiDiscoveryService service_ipv6 ;
+ChiakiDiscoveryService service;
+ChiakiDiscoveryService service_ipv6;
 
 CHIAKI_EXPORT ChiakiErrorCode discovery_ps(ChiakiDiscoveryServiceCb cb, ChiakiLog *log)
 {
-    ChiakiErrorCode err;  // 在函数开头定义 err
+    ChiakiErrorCode err; // 在函数开头定义 err
 
     ChiakiDiscoveryServiceOptions options = {0};
     options.ping_ms = PING_MS;
@@ -196,20 +196,19 @@ CHIAKI_EXPORT ChiakiErrorCode discovery_ps(ChiakiDiscoveryServiceCb cb, ChiakiLo
         CHIAKI_LOGW(log, "No external broadcast addresses found!");
     }
 
-     err = chiaki_discovery_service_init(&service, &options, log);
+    err = chiaki_discovery_service_init(&service, &options, log);
     if (options.broadcast_addrs)
         free(options.broadcast_addrs);
     if (broadcast_addresses)
         free(broadcast_addresses);
     if (err != CHIAKI_ERR_SUCCESS)
     {
-       
+
         CHIAKI_LOGE(log, "DiscoveryManager failed to init Discovery Service IPV4");
         return err;
     }
     else
     {
-   
     }
 
     ChiakiDiscoveryServiceOptions options_ipv6 = {};
@@ -228,7 +227,7 @@ CHIAKI_EXPORT ChiakiErrorCode discovery_ps(ChiakiDiscoveryServiceCb cb, ChiakiLo
     options_ipv6.send_addr_size = sizeof(in_addr_ipv6);
     options_ipv6.send_host = NULL;
 
-     err = chiaki_discovery_service_init(&service_ipv6, &options_ipv6, log);
+    err = chiaki_discovery_service_init(&service_ipv6, &options_ipv6, log);
     if (err != CHIAKI_ERR_SUCCESS)
     {
         CHIAKI_LOGE(log, "DiscoveryManager failed to init Discovery Service IPV6");
@@ -238,4 +237,141 @@ CHIAKI_EXPORT ChiakiErrorCode discovery_ps(ChiakiDiscoveryServiceCb cb, ChiakiLo
     }
 
     return CHIAKI_ERR_SUCCESS;
+}
+
+// 假设 to_ulong 和 to_ulonglong 函数的简单实现
+uint32_t to_ulong(const char *str)
+{
+    return (uint32_t)strtoul(str, NULL, 10);
+}
+
+uint64_t to_ulonglong(const char *str, int *ok)
+{
+    char *endptr;
+    uint64_t result = strtoull(str, &endptr, 10);
+    if (*endptr != '\0')
+    {
+        *ok = 0;
+    }
+    else
+    {
+        *ok = 1;
+    }
+    return result;
+}
+
+CHIAKI_EXPORT bool regist_ps(const char *host, const char *psn_id, const char *pin, const char *cpin, bool broadcast, int target, ChiakiRegistCb cb, ChiakiLog *log,void *cb_user)
+{
+    ChiakiRegistInfo info;
+    memset(&info, 0, sizeof(ChiakiRegistInfo));
+    info.host = host;
+    info.target = target;
+    info.broadcast = broadcast;
+    info.pin = to_ulong(pin);
+    info.console_pin = to_ulong(cpin);
+    info.holepunch_info = NULL;
+    info.rudp = NULL;
+
+    if (target == CHIAKI_TARGET_PS4_8)
+    {
+        info.psn_online_id = psn_id;
+    }
+    else
+    {
+        int ok;
+        uint64_t intId = to_ulonglong(psn_id, &ok);
+        if (!ok)
+        {
+            char message[256];
+            snprintf(message, sizeof(message), "请检查psnID是否正确%d", CHIAKI_PSN_ACCOUNT_ID_SIZE);
+            CHIAKI_LOGE(log, message);
+            return false;
+        }
+
+        for (int i = 0; i < CHIAKI_PSN_ACCOUNT_ID_SIZE; ++i)
+        {
+            info.psn_account_id[i] = (intId >> (i * 8)) & 0xFF;
+        }
+
+        info.psn_online_id = NULL;
+    }
+    ChiakiRegist chiaki_regist;
+    ChiakiErrorCode result = chiaki_regist_start(&chiaki_regist, log, &info, cb, cb_user);
+    if (result != CHIAKI_ERR_SUCCESS)
+    {
+        char error_msg[256];
+        switch (result) {
+            case CHIAKI_ERR_UNKNOWN:
+                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_UNKNOWN");
+                break;
+            case CHIAKI_ERR_PARSE_ADDR:
+                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_PARSE_ADDR");
+                break;
+            case CHIAKI_ERR_THREAD:
+                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_THREAD");
+                break;
+            case CHIAKI_ERR_MEMORY:
+                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_MEMORY");
+                break;
+            case CHIAKI_ERR_OVERFLOW:
+                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_OVERFLOW");
+                break;
+            case CHIAKI_ERR_NETWORK:
+                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_NETWORK");
+                break;
+            case CHIAKI_ERR_CONNECTION_REFUSED:
+                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_CONNECTION_REFUSED");
+                break;
+            case CHIAKI_ERR_HOST_DOWN:
+                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_HOST_DOWN");
+                break;
+            case CHIAKI_ERR_HOST_UNREACH:
+                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_HOST_UNREACH");
+                break;
+            case CHIAKI_ERR_DISCONNECTED:
+                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_DISCONNECTED");
+                break;
+            case CHIAKI_ERR_INVALID_DATA:
+                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_INVALID_DATA");
+                break;
+            case CHIAKI_ERR_BUF_TOO_SMALL:
+                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_BUF_TOO_SMALL");
+                break;
+            case CHIAKI_ERR_MUTEX_LOCKED:
+                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_MUTEX_LOCKED");
+                break;
+            case CHIAKI_ERR_CANCELED:
+                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_CANCELED");
+                break;
+            case CHIAKI_ERR_TIMEOUT:
+                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_TIMEOUT");
+                break;
+            case CHIAKI_ERR_INVALID_RESPONSE:
+                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_INVALID_RESPONSE");
+                break;
+            case CHIAKI_ERR_INVALID_MAC:
+                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_INVALID_MAC");
+                break;
+            case CHIAKI_ERR_UNINITIALIZED:
+                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_UNINITIALIZED");
+                break;
+            case CHIAKI_ERR_FEC_FAILED:
+                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_FEC_FAILED");
+                break;
+            case CHIAKI_ERR_VERSION_MISMATCH:
+                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_VERSION_MISMATCH");
+                break;
+            case CHIAKI_ERR_HTTP_NONOK:
+                snprintf(error_msg, sizeof(error_msg), "注册失败，错误码: CHIAKI_ERR_HTTP_NONOK");
+                break;
+            default:
+                snprintf(error_msg, sizeof(error_msg), "注册失败，未知错误码: %d", result);
+        }
+        CHIAKI_LOGE(log, error_msg);
+        return false;
+    }else{
+        CHIAKI_LOGI(log, "注册成功！");
+    }
+
+    return true;
 }
