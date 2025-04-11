@@ -494,21 +494,21 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
     if (session == NULL)
     {
         CHIAKI_LOGE(log, "Session malloc failed");
-        chiaki_session_fini(&session);
+        chiaki_session_fini(session);
         return err;
     }
-    err = chiaki_session_init(&session, &connect_info, log);
+    err = chiaki_session_init(session, &connect_info, log);
     if (err != CHIAKI_ERR_SUCCESS)
     {
         CHIAKI_LOGE(log, "Session init failed: %s", chiaki_error_string(err));
         return err;
     }
 
-    err = chiaki_session_start(&session);
+    err = chiaki_session_start(session);
     if (err != CHIAKI_ERR_SUCCESS)
     {
         CHIAKI_LOGE(log, "Session start failed: %s", chiaki_error_string(err));
-        chiaki_session_fini(&session);
+        chiaki_session_fini(session);
         return err;
     }
     return CHIAKI_ERR_SUCCESS; // 返回成功状态
