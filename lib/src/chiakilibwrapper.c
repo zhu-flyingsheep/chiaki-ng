@@ -458,7 +458,7 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
     ChiakiFfmpegDecoder *ffmpeg_decoder = (ChiakiFfmpegDecoder *)malloc(sizeof(ChiakiFfmpegDecoder));
     if (ffmpeg_decoder == NULL)
     {
-        CHIAKI_LOGE(log,  ffmpeg_decoder malloc failed);
+        CHIAKI_LOGE(log, "ffmpeg_decoder malloc failed");
         return -1;
     }
 
@@ -466,7 +466,7 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
                                      log,
                                      CHIAKI_CODEC_H264,
                                      "d3d11va",
-                                     connect_info.hw_device_ctx,
+                                     NULL,
                                      FfmpegFrameCb,
                                      NULL);
 
