@@ -460,7 +460,7 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
     connect_info.enable_keyboard = false;
     connect_info.enable_dualsense = true;
     connect_info.audio_video_disabled = CHIAKI_AUDIO_DISABLED;
-    
+
     connect_info.packet_loss_max = 0.050000f;
     ChiakiErrorCode err;
 
@@ -482,7 +482,13 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
                                      FfmpegFrameCb,
                                      log);
 
-    ChiakiSession session = {0};
+    ChiakiSession *session = (ChiakiSession *)malloc(sizeof(ChiakiSession));
+    if (session == NULL)
+    {
+        CHIAKI_LOGE(log, "Session malloc failed");
+        chiaki_session_fini(&session);
+        return err;
+    }
     err = chiaki_session_init(&session, &connect_info, log);
     if (err != CHIAKI_ERR_SUCCESS)
     {
@@ -500,10 +506,7 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
     return CHIAKI_ERR_SUCCESS; // 返回成功状态
 }
 
-
-
 static void FfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user)
 {
     CHIAKI_LOGI(user, "FfmpegFrameCb called!");
-
 }
