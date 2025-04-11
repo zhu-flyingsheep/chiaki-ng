@@ -91,7 +91,7 @@ typedef struct chiaki_connect_info_t
 } ChiakiConnectInfo;
 
 // 声明 ChiakiConnectInfoToString 函数
-void ChiakiConnectInfoToString(const ChiakiConnectInfo *info, char *buffer, size_t bufferSize);
+void ChiakiConnectInfoToString(ChiakiConnectInfo *connect_info, char *buffer, size_t buffer_size);
 
 
 typedef enum {

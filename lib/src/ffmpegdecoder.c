@@ -24,9 +24,9 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_ffmpeg_decoder_init(ChiakiFfmpegDecoder *de
 	CHIAKI_LOGI(log, "chiaki_ffmpeg_decoder_init hw_decoder_name \"%s\"", hw_decoder_name);
 	if (hw_device_ctx==NULL)
 	{
-		CHIAKI_LOGI(log,"chiaki_ffmpeg_decoder_init hw_device_ctx is null")
+		CHIAKI_LOGI(log,"chiaki_ffmpeg_decoder_init hw_device_ctx is null");
 	}else{
-		CHIAKI_LOGI(log,"chiaki_ffmpeg_decoder_init hw_device_ctx is not null")
+		CHIAKI_LOGI(log,"chiaki_ffmpeg_decoder_init hw_device_ctx is not null");
 	}
 	
 	ChiakiErrorCode err = chiaki_mutex_init(&decoder->mutex, false);
