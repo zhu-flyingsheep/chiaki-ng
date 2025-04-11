@@ -482,6 +482,14 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
                                      FfmpegFrameCb,
                                      log);
 
+    if (err != CHIAKI_ERR_SUCCESS)
+    {
+        CHIAKI_LOGE(log, "ffmpeg_decoder init failed: %s", chiaki_error_string(err));
+        chiaki_ffmpeg_decoder_fini(ffmpeg_decoder);
+        free(ffmpeg_decoder);
+        return err;
+    }
+
     ChiakiSession *session = (ChiakiSession *)malloc(sizeof(ChiakiSession));
     if (session == NULL)
     {
