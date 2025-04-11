@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <ctype.h>
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -260,7 +262,7 @@ uint64_t to_ulonglong(const char *str, int *ok)
     return result;
 }
 
-CHIAKI_EXPORT ChiakiRegist* regist_ps(const char *host, const char *psn_id, const char *pin, const char *cpin, bool broadcast, int target, ChiakiRegistCb cb, ChiakiLog *log, void *cb_user)
+CHIAKI_EXPORT ChiakiRegist *regist_ps(const char *host, const char *psn_id, const char *pin, const char *cpin, bool broadcast, int target, ChiakiRegistCb cb, ChiakiLog *log, void *cb_user)
 {
     ChiakiRegistInfo info;
     memset(&info, 0, sizeof(ChiakiRegistInfo));
@@ -308,7 +310,7 @@ CHIAKI_EXPORT ChiakiRegist* regist_ps(const char *host, const char *psn_id, cons
     if (result != CHIAKI_ERR_SUCCESS)
     {
         chiaki_regist_fini(chiaki_regist);
-	    chiaki_regist_stop(chiaki_regist);
+        chiaki_regist_stop(chiaki_regist);
         char error_msg[256];
         switch (result)
         {
@@ -389,4 +391,99 @@ CHIAKI_EXPORT ChiakiRegist* regist_ps(const char *host, const char *psn_id, cons
     return chiaki_regist;
 }
 
+// 十六进制字符转数字
+int hex_char_to_int(char c)
+{
+    if (c >= '0' && c <= '9')
+    {
+        return c - '0';
+    }
+    else if (c >= 'A' && c <= 'F')
+    {
+        return c - 'A' + 10;
+    }
+    else if (c >= 'a' && c <= 'f')
+    {
+        return c - 'a' + 10;
+    }
+    return -1;
+}
 
+// 十六进制字符串转 uint8_t 数组
+void hex_string_to_uint8_array(const char *str, uint8_t *arr, size_t arr_size)
+{
+    size_t str_len = strlen(str);
+    if (str_len != arr_size * 2)
+    {
+        return;
+    }
+    for (size_t i = 0; i < arr_size; i++)
+    {
+        int high = hex_char_to_int(str[i * 2]);
+        int low = hex_char_to_int(str[i * 2 + 1]);
+        if (high == -1 || low == -1)
+        {
+            return;
+        }
+        arr[i] = (high << 4) | low;
+    }
+}
+
+static void FfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user);
+
+CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
+                                         const char *string_rp_key,
+                                         const char *string_rp_regist_key,
+                                         ChiakiTarget target,
+                                         ChiakiLog *log)
+{
+    uint8_t morning[16];
+    uint8_t regist_key[16];
+    // 十六进制字符串转 uint8_t 数组
+    hex_string_to_uint8_array(string_rp_key, morning, 16);
+    hex_string_to_uint8_array(string_rp_regist_key, regist_key, 16);
+    ChiakiConnectInfo connect_info = {0};
+    connect_info.host = host;
+
+    connect_info.ps5 = chiaki_target_is_ps5(target);
+    connect_info.auto_regist = false;
+    connect_info.holepunch_session = false;
+    connect_info.packet_loss_max = 0.0f;
+
+    ChiakiErrorCode err;
+
+    memcpy(connect_info.regist_key, regist_key, sizeof(regist_key));
+    memcpy(connect_info.morning, morning, sizeof(morning));
+
+    ChiakiFfmpegDecoder *ffmpeg_decoder = (ChiakiFfmpegDecoder *)malloc(sizeof(ChiakiFfmpegDecoder));
+    if (ffmpeg_decoder == NULL)
+    {
+        CHIAKI_LOGE(log,  ffmpeg_decoder malloc failed);
+        return -1;
+    }
+
+    err = chiaki_ffmpeg_decoder_init(ffmpeg_decoder,
+                                     log,
+                                     CHIAKI_CODEC_H264,
+                                     "d3d11va",
+                                     connect_info.hw_device_ctx,
+                                     FfmpegFrameCb,
+                                     NULL);
+
+    ChiakiSession session = {0};
+    err = chiaki_session_init(&session, &connect_info, log);
+    if (err != CHIAKI_ERR_SUCCESS)
+    {
+        CHIAKI_LOGE(log, "Session init failed: %s", chiaki_error_string(err));
+        return err;
+    }
+
+    return CHIAKI_ERR_SUCCESS; // 返回成功状态
+}
+
+
+
+static void FfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user)
+{
+   
+}
