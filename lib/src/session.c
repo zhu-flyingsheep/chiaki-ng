@@ -171,49 +171,76 @@ CHIAKI_EXPORT const char *chiaki_quit_reason_string(ChiakiQuitReason reason)
 	}
 }
 
-// 将 ChiakiConnectVideoProfile 结构体转换为字符串
-void ChiakiConnectVideoProfileToString(const ChiakiConnectVideoProfile *profile, char *buffer, size_t bufferSize) {
-    snprintf(buffer, bufferSize, "Video Profile:\n  Width: %u\n  Height: %u\n  Max FPS: %u\n  Bitrate: %u\n  Codec: ", 
-             profile->width, profile->height, profile->max_fps, profile->bitrate);
-    switch (profile->codec) {
-        case CHIAKI_CODEC_H264:
-            strncat(buffer, "CHIAKI_CODEC_H264\n", bufferSize - strlen(buffer));
-            break;
-        // 可添加其他编解码器类型的处理
-        default:
-            strncat(buffer, "Unknown\n", bufferSize - strlen(buffer));
-            break;
-    }
+// 辅助函数：将视频配置文件信息添加到缓冲区
+void add_video_profile_to_buffer(ChiakiConnectVideoProfile *profile, char *buffer, size_t buffer_size) {
+    size_t len = strlen(buffer);
+    snprintf(buffer + len, buffer_size - len, "Video Profile:\n");
+    len = strlen(buffer);
+    snprintf(buffer + len, buffer_size - len, "  Width: %u\n", profile->width);
+    len = strlen(buffer);
+    snprintf(buffer + len, buffer_size - len, "  Height: %u\n", profile->height);
+    len = strlen(buffer);
+    snprintf(buffer + len, buffer_size - len, "  Max FPS: %u\n", profile->max_fps);
+    len = strlen(buffer);
+    snprintf(buffer + len, buffer_size - len, "  Bitrate: %u\n", profile->bitrate);
+    len = strlen(buffer);
+    snprintf(buffer + len, buffer_size - len, "  Codec: %d\n", profile->codec);
 }
 
-// 将 ChiakiConnectInfo 结构体转换为字符串
-void ChiakiConnectInfoToString(const ChiakiConnectInfo *info, char *buffer, size_t bufferSize) {
-    snprintf(buffer, bufferSize, "ChiakiConnectInfo:\n  PS5: %s\n  Host: %s\n  Regist Key: ", 
-             info->ps5? "Yes" : "No", info->host);
-    for (int i = 0; i < 0x10; i++) {
-        char hexStr[3];
-        snprintf(hexStr, sizeof(hexStr), "%02x ", info->regist_key[i]);
-        strncat(buffer, hexStr, bufferSize - strlen(buffer));
+// 将 ChiakiConnectInfo 结构体内容转换为字符串
+void ChiakiConnectInfoToString(ChiakiConnectInfo *connect_info, char *buffer, size_t buffer_size) {
+    if (connect_info == NULL) {
+        snprintf(buffer, buffer_size, "connect_info is NULL.\n");
+        return;
     }
-    strncat(buffer, "\n  Morning: ", bufferSize - strlen(buffer));
-    for (int i = 0; i < 0x10; i++) {
-        char hexStr[3];
-        snprintf(hexStr, sizeof(hexStr), "%02x ", info->morning[i]);
-        strncat(buffer, hexStr, bufferSize - strlen(buffer));
+
+    size_t len = 0;
+    len = snprintf(buffer, buffer_size, "PS5: %s\n", connect_info->ps5 ? "true" : "false");
+    len += snprintf(buffer + len, buffer_size - len, "Host: %s (address: %p)\n", connect_info->host, (void *)connect_info->host);
+
+    len += snprintf(buffer + len, buffer_size - len, "Regist Key: ");
+    for (int i = 0; i < CHIAKI_SESSION_AUTH_SIZE; i++) {
+        if (i > 0) {
+            len += snprintf(buffer + len, buffer_size - len, " ");
+        }
+        len += snprintf(buffer + len, buffer_size - len, "%02x", (unsigned char)connect_info->regist_key[i]);
     }
-    char videoProfileBuffer[1024];
-    ChiakiConnectVideoProfileToString(&info->video_profile, videoProfileBuffer, sizeof(videoProfileBuffer));
-    strncat(buffer, videoProfileBuffer, bufferSize - strlen(buffer));
-    snprintf(buffer + strlen(buffer), bufferSize - strlen(buffer), 
-             "  Video Profile Auto Downgrade: %s\n  Enable Keyboard: %s\n  Enable DualSense: %s\n  Audio Video Disabled: %d\n  Auto Regist: %s\n   Rudp Sock: %p\n  PSN Account ID: ", 
-             info->video_profile_auto_downgrade? "Yes" : "No", info->enable_keyboard? "Yes" : "No", info->enable_dualsense? "Yes" : "No", info->audio_video_disabled, info->auto_regist? "Yes" : "No", info->rudp_sock);
+    len += snprintf(buffer + len, buffer_size - len, "\n");
+
+    len += snprintf(buffer + len, buffer_size - len, "Morning: ");
     for (int i = 0; i < 0x10; i++) {
-        char hexStr[3];
-        snprintf(hexStr, sizeof(hexStr), "%02x ", info->psn_account_id[i]);
-        strncat(buffer, hexStr, bufferSize - strlen(buffer));
+        if (i > 0) {
+            len += snprintf(buffer + len, buffer_size - len, " ");
+        }
+        len += snprintf(buffer + len, buffer_size - len, "%02x", connect_info->morning[i]);
     }
-    snprintf(buffer + strlen(buffer), bufferSize - strlen(buffer), "\n  Packet Loss Max: %f\n", info->packet_loss_max);
+    len += snprintf(buffer + len, buffer_size - len, "\n");
+
+    add_video_profile_to_buffer(&connect_info->video_profile, buffer, buffer_size);
+    len = strlen(buffer);
+
+    len += snprintf(buffer + len, buffer_size - len, "Video Profile Auto Downgrade: %s\n", connect_info->video_profile_auto_downgrade ? "true" : "false");
+    len += snprintf(buffer + len, buffer_size - len, "Enable Keyboard: %s\n", connect_info->enable_keyboard ? "true" : "false");
+    len += snprintf(buffer + len, buffer_size - len, "Enable DualSense: %s\n", connect_info->enable_dualsense ? "true" : "false");
+
+    len += snprintf(buffer + len, buffer_size - len, "Audio Video Disabled: %d\n", connect_info->audio_video_disabled);
+    len += snprintf(buffer + len, buffer_size - len, "Auto Regist: %s\n", connect_info->auto_regist ? "true" : "false");
+
+    len += snprintf(buffer + len, buffer_size - len, "Holepunch Session: %p\n", (void *)connect_info->holepunch_session);
+    len += snprintf(buffer + len, buffer_size - len, "RUDP Socket: %p\n", (void *)connect_info->rudp_sock);
+
+    len += snprintf(buffer + len, buffer_size - len, "PSN Account ID: ");
+    for (int i = 0; i < CHIAKI_PSN_ACCOUNT_ID_SIZE; i++) {
+        if (i > 0) {
+            len += snprintf(buffer + len, buffer_size - len, " ");
+        }
+        len += snprintf(buffer + len, buffer_size - len, "%02x", connect_info->psn_account_id[i]);
+    }
+    len += snprintf(buffer + len, buffer_size - len, "\n");
+
+    snprintf(buffer + len, buffer_size - len, "Packet Loss Max: %f\n", connect_info->packet_loss_max);
 }
+    
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_session_init(ChiakiSession *session, ChiakiConnectInfo *connect_info,
 	ChiakiLog *log)
