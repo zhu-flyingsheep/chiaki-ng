@@ -450,6 +450,18 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
     connect_info.holepunch_session = false;
     connect_info.packet_loss_max = 0.0f;
 
+    connect_info.video_profile={0};
+    connect_info.video_profile.width = 1280;
+    connect_info.video_profile.height = 720;
+    connect_info.video_profile.max_fps = 60;
+    connect_info.video_profile.bitrate = 1000;
+    connect_info.video_profile.codec = CHIAKI_CODEC_H264;
+    connect_info.video_profile_auto_downgrade = true;
+    connect_info.enable_keyboard = false;
+    connect_info.enable_dualsense = true;
+    connect_info.audio_video_disabled = CHIAKI_AUDIO_DISABLED;
+    
+    connect_info.packet_loss_max = 0.050000f;
     ChiakiErrorCode err;
 
     memcpy(connect_info.regist_key, regist_key, sizeof(regist_key));
@@ -478,6 +490,13 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
         return err;
     }
 
+    err = chiaki_session_start(&session);
+    if (err != CHIAKI_ERR_SUCCESS)
+    {
+        CHIAKI_LOGE(log, "Session start failed: %s", chiaki_error_string(err));
+        chiaki_session_fini(&session);
+        return err;
+    }
     return CHIAKI_ERR_SUCCESS; // 返回成功状态
 }
 
@@ -485,5 +504,6 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
 
 static void FfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user)
 {
-   
+    CHIAKI_LOGI(log, "FfmpegFrameCb called!");
+
 }
