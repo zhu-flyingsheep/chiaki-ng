@@ -450,7 +450,7 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
     connect_info.holepunch_session = false;
     connect_info.packet_loss_max = 0.0f;
 
-    connect_info.video_profile={0};
+    memset(&connect_info.video_profile, 0, sizeof(connect_info.video_profile));
     connect_info.video_profile.width = 1280;
     connect_info.video_profile.height = 720;
     connect_info.video_profile.max_fps = 60;
@@ -480,7 +480,7 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
                                      "d3d11va",
                                      NULL,
                                      FfmpegFrameCb,
-                                     NULL);
+                                     log);
 
     ChiakiSession session = {0};
     err = chiaki_session_init(&session, &connect_info, log);
@@ -504,6 +504,6 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
 
 static void FfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user)
 {
-    CHIAKI_LOGI(log, "FfmpegFrameCb called!");
+    CHIAKI_LOGI(user, "FfmpegFrameCb called!");
 
 }
