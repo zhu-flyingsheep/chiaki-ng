@@ -429,7 +429,7 @@ void hex_string_to_uint8_array(const char *str, uint8_t *arr, size_t arr_size)
     }
 }
 
-static void FfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user);
+static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user);
 
 CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
                                          const char *string_rp_key,
@@ -467,6 +467,14 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
     memcpy(connect_info.regist_key, regist_key, sizeof(regist_key));
     memcpy(connect_info.morning, morning, sizeof(morning));
 
+    ChiakiSession *session = (ChiakiSession *)malloc(sizeof(ChiakiSession));
+    if (session == NULL)
+    {
+        CHIAKI_LOGE(log, "Session malloc failed");
+        chiaki_session_fini(session);
+        return err;
+    }
+
     ChiakiFfmpegDecoder *ffmpeg_decoder = (ChiakiFfmpegDecoder *)malloc(sizeof(ChiakiFfmpegDecoder));
     if (ffmpeg_decoder == NULL)
     {
@@ -479,8 +487,8 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
                                      CHIAKI_CODEC_H264,
                                      "d3d11va",
                                      NULL,
-                                     FfmpegFrameCb,
-                                     log);
+                                     MyFfmpegFrameCb,
+                                     session);
 
     if (err != CHIAKI_ERR_SUCCESS)
     {
@@ -490,13 +498,7 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
         return err;
     }
 
-    ChiakiSession *session = (ChiakiSession *)malloc(sizeof(ChiakiSession));
-    if (session == NULL)
-    {
-        CHIAKI_LOGE(log, "Session malloc failed");
-        chiaki_session_fini(session);
-        return err;
-    }
+
     err = chiaki_session_init(session, &connect_info, log);
     if (err != CHIAKI_ERR_SUCCESS)
     {
@@ -514,7 +516,9 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
     return CHIAKI_ERR_SUCCESS; // 返回成功状态
 }
 
-static void FfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user)
+static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
 {
-    CHIAKI_LOGI(user, "FfmpegFrameCb called!");
+    ChiakiSession *sess = (ChiakiSession *)session;
+    CHIAKI_LOGI(sess->log, "FfmpegFrameCb called===============================\n");
+
 }
