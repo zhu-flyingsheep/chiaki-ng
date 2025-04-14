@@ -433,6 +433,12 @@ static void *discovery_thread_func_oneshot(void *user)
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_discovery_wakeup(ChiakiLog *log, ChiakiDiscovery *discovery, const char *host, uint64_t user_credential, bool ps5)
 {
+
+    CHIAKI_LOGI(log, "Discovery pointer address: %p", (void *)discovery);
+    CHIAKI_LOGI(log, "Host: %s", host);
+    CHIAKI_LOGI(log, "User credential: %lu", (unsigned long)user_credential);
+    CHIAKI_LOGI(log, "PS5 flag: %s", ps5 ? "true" : "false");
+
 	struct addrinfo *addrinfos;
 	// make hostname use ipv4 for now
 	struct addrinfo hints;
