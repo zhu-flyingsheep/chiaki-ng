@@ -237,7 +237,7 @@ CHIAKI_EXPORT ChiakiErrorCode discovery_ps(ChiakiDiscoveryServiceCb cb, ChiakiLo
     if (err != CHIAKI_ERR_SUCCESS)
     {
         CHIAKI_LOGE(log, "DiscoveryManager failed to init Discovery Service IPV6");
-        service_active_ipv6 = false
+        service_active_ipv6 = false;
     }
     else
     {
@@ -253,7 +253,7 @@ CHIAKI_EXPORT  bool wakeup_ps(const char *host, const char *regist_key, bool ps5
     size_t key_size = strlen(regist_key);
     char *key = (char *)malloc(key_size + 1);
     if (key == NULL) {
-        CHIAKI_LOGE(sess->log, "Memory allocation failed");
+        CHIAKI_LOGE(log, "Memory allocation failed");
 
         return false;
     }
@@ -270,7 +270,7 @@ CHIAKI_EXPORT  bool wakeup_ps(const char *host, const char *regist_key, bool ps5
     char *endptr;
     credential = strtoull(key, &endptr, 16);
     if (*endptr != '\0' || key_size > 16) {
-        CHIAKI_LOGE(sess->log, "DiscoveryManager got invalid regist key for wakeup");
+        CHIAKI_LOGE(log, "DiscoveryManager got invalid regist key for wakeup");
         return false;
     }
 
@@ -283,7 +283,7 @@ CHIAKI_EXPORT  bool wakeup_ps(const char *host, const char *regist_key, bool ps5
     }
 
     if (err != CHIAKI_ERR_SUCCESS) {
-        CHIAKI_LOGE(sess->log, "Failed to send Packet: %s\n", chiaki_error_string(err));
+        CHIAKI_LOGE(log, "Failed to send Packet: %s\n", chiaki_error_string(err));
         return false;
     }
 
