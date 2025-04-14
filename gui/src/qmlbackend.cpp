@@ -763,6 +763,7 @@ void QmlBackend::createSession(const StreamSessionConnectInfo &connect_info)
     }
 
     connect(session, &StreamSession::FfmpegFrameAvailable, frame_thread->parent(), [this]() {
+        qDebug() << "FfmpegFrameAvailable=========";
         ChiakiFfmpegDecoder *decoder = session->GetFfmpegDecoder();
         if (!decoder) {
             qCCritical(chiakiGui) << "Session has no FFmpeg decoder";

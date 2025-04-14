@@ -1877,7 +1877,7 @@ void StreamSession::Event(ChiakiEvent *event)
 				&orient_tracker, setsu_state.gyro_x, setsu_state.gyro_y, setsu_state.gyro_z,
 				setsu_real_accel.accel_x, setsu_real_accel.accel_y, setsu_real_accel.accel_z, &setsu_accel_zero, false, chiaki_time_now_monotonic_us());
 			chiaki_orientation_tracker_apply_to_controller_state(&orient_tracker, &setsu_state);
-#endif
+#endif 
 			break;
 		}
 		case CHIAKI_EVENT_HAPTIC_INTENSITY: {
@@ -2280,5 +2280,6 @@ static void SessionSDeckCb(SDeckEvent *event, void *user)
 static void FfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user)
 {
 	auto session = reinterpret_cast<StreamSession *>(user);
+	qDebug	() << "FfmpegFrameCb===========================";
 	StreamSessionPrivate::TriggerFfmpegFrameAvailable(session);
 }
