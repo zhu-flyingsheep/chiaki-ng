@@ -28,6 +28,9 @@
 ChiakiDiscoveryService service;
 ChiakiDiscoveryService service_ipv6;
 
+bool service_active = false;
+bool service_active_ipv6 = false;
+
 CHIAKI_EXPORT ChiakiErrorCode discovery_ps(ChiakiDiscoveryServiceCb cb, ChiakiLog *log)
 {
     ChiakiErrorCode err; // 在函数开头定义 err
@@ -205,12 +208,13 @@ CHIAKI_EXPORT ChiakiErrorCode discovery_ps(ChiakiDiscoveryServiceCb cb, ChiakiLo
         free(broadcast_addresses);
     if (err != CHIAKI_ERR_SUCCESS)
     {
-
+        service_active = false;
         CHIAKI_LOGE(log, "DiscoveryManager failed to init Discovery Service IPV4");
         return err;
     }
     else
     {
+        service_active = true;
     }
 
     ChiakiDiscoveryServiceOptions options_ipv6 = {};
@@ -233,14 +237,58 @@ CHIAKI_EXPORT ChiakiErrorCode discovery_ps(ChiakiDiscoveryServiceCb cb, ChiakiLo
     if (err != CHIAKI_ERR_SUCCESS)
     {
         CHIAKI_LOGE(log, "DiscoveryManager failed to init Discovery Service IPV6");
+        service_active_ipv6 = false
     }
     else
     {
+        service_active_ipv6 = true;
     }
 
     return CHIAKI_ERR_SUCCESS;
 }
 
+
+
+CHIAKI_EXPORT  bool wakeup_ps(const char *host, const char *regist_key, bool ps5,ChiakiLog *log){
+    size_t key_size = strlen(regist_key);
+    char *key = (char *)malloc(key_size + 1);
+    if (key == NULL) {
+        CHIAKI_LOGE(sess->log, "Memory allocation failed");
+
+        return false;
+    }
+    strcpy(key, regist_key);
+
+    for (size_t i = 0; i < key_size; i++) {
+        if (key[i] == '\0') {
+            key[i] = '\0';
+            break;
+        }
+    }
+
+    uint64_t credential = 0;
+    char *endptr;
+    credential = strtoull(key, &endptr, 16);
+    if (*endptr != '\0' || key_size > 16) {
+        CHIAKI_LOGE(sess->log, "DiscoveryManager got invalid regist key for wakeup");
+        return false;
+    }
+
+    char *ipv6 = strchr(host, ':');
+    int err;
+    if (ipv6) {
+        err = chiaki_discovery_wakeup(log, service_active_ipv6 ? &service_ipv6.discovery : NULL, host, credential, ps5);
+    } else {
+        err = chiaki_discovery_wakeup(log, service_active ? &service.discovery : NULL, host, credential, ps5);
+    }
+
+    if (err != CHIAKI_ERR_SUCCESS) {
+        CHIAKI_LOGE(sess->log, "Failed to send Packet: %s\n", chiaki_error_string(err));
+        return false;
+    }
+
+    return true;
+}
 // 假设 to_ulong 和 to_ulonglong 函数的简单实现
 uint32_t to_ulong(const char *str)
 {
@@ -459,7 +507,7 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
     connect_info.video_profile_auto_downgrade = true;
     connect_info.enable_keyboard = false;
     connect_info.enable_dualsense = true;
-    connect_info.audio_video_disabled = CHIAKI_AUDIO_DISABLED;
+    connect_info.audio_video_disabled = CHIAKI_NONE_DISABLED;
 
     connect_info.packet_loss_max = 0.050000f;
     ChiakiErrorCode err;
@@ -498,7 +546,6 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
         return err;
     }
 
-
     err = chiaki_session_init(session, &connect_info, log);
     if (err != CHIAKI_ERR_SUCCESS)
     {
@@ -522,5 +569,4 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
 {
     ChiakiSession *sess = (ChiakiSession *)session;
     CHIAKI_LOGI(sess->log, "FfmpegFrameCb called===============================\n");
-
 }
