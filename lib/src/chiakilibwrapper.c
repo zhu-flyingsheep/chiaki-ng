@@ -506,6 +506,8 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
         return err;
     }
 
+    chiaki_session_set_video_sample_cb(&session, chiaki_ffmpeg_decoder_video_sample_cb, ffmpeg_decoder);
+
     err = chiaki_session_start(session);
     if (err != CHIAKI_ERR_SUCCESS)
     {
