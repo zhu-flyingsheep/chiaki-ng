@@ -237,7 +237,7 @@ CHIAKI_EXPORT ChiakiErrorCode discovery_ps(ChiakiDiscoveryServiceCb cb, ChiakiLo
     if (err != CHIAKI_ERR_SUCCESS)
     {
         CHIAKI_LOGE(log, "DiscoveryManager failed to init Discovery Service IPV6");
-        service_active_ipv6 = false;
+        service_active_ipv6 = false
     }
     else
     {
@@ -247,20 +247,22 @@ CHIAKI_EXPORT ChiakiErrorCode discovery_ps(ChiakiDiscoveryServiceCb cb, ChiakiLo
     return CHIAKI_ERR_SUCCESS;
 }
 
-
-
-CHIAKI_EXPORT  bool wakeup_ps(const char *host, const char *regist_key, bool ps5,ChiakiLog *log){
+CHIAKI_EXPORT bool wakeup_ps(const char *host, const char *regist_key, bool ps5, ChiakiLog *log)
+{
     size_t key_size = strlen(regist_key);
     char *key = (char *)malloc(key_size + 1);
-    if (key == NULL) {
-        CHIAKI_LOGE(log, "Memory allocation failed");
+    if (key == NULL)
+    {
+        CHIAKI_LOGE(sess->log, "Memory allocation failed");
 
         return false;
     }
     strcpy(key, regist_key);
 
-    for (size_t i = 0; i < key_size; i++) {
-        if (key[i] == '\0') {
+    for (size_t i = 0; i < key_size; i++)
+    {
+        if (key[i] == '\0')
+        {
             key[i] = '\0';
             break;
         }
@@ -269,21 +271,26 @@ CHIAKI_EXPORT  bool wakeup_ps(const char *host, const char *regist_key, bool ps5
     uint64_t credential = 0;
     char *endptr;
     credential = strtoull(key, &endptr, 16);
-    if (*endptr != '\0' || key_size > 16) {
-        CHIAKI_LOGE(log, "DiscoveryManager got invalid regist key for wakeup");
+    if (*endptr != '\0' || key_size > 16)
+    {
+        CHIAKI_LOGE(sess->log, "DiscoveryManager got invalid regist key for wakeup");
         return false;
     }
 
     char *ipv6 = strchr(host, ':');
     int err;
-    if (ipv6) {
+    if (ipv6)
+    {
         err = chiaki_discovery_wakeup(log, service_active_ipv6 ? &service_ipv6.discovery : NULL, host, credential, ps5);
-    } else {
+    }
+    else
+    {
         err = chiaki_discovery_wakeup(log, service_active ? &service.discovery : NULL, host, credential, ps5);
     }
 
-    if (err != CHIAKI_ERR_SUCCESS) {
-        CHIAKI_LOGE(log, "Failed to send Packet: %s\n", chiaki_error_string(err));
+    if (err != CHIAKI_ERR_SUCCESS)
+    {
+        CHIAKI_LOGE(sess->log, "Failed to send Packet: %s\n", chiaki_error_string(err));
         return false;
     }
 
@@ -565,8 +572,136 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
     return CHIAKI_ERR_SUCCESS; // 返回成功状态
 }
 
+// 全局状态
+static struct
+{
+    FrameCallback callback;
+    void *userdata;
+    SwsContext *sws_ctx;
+    int last_width;
+    int last_height;
+} g_ctx = {0};
+
+CHIAKI_EXPORT int VideoCallbackInit()
+{
+    if (g_ctx.sws_ctx)
+    {
+        sws_freeContext(g_ctx.sws_ctx);
+        g_ctx.sws_ctx = NULL;
+    }
+    g_ctx.last_width = 0;
+    g_ctx.last_height = 0;
+    return 0;
+}
+
+CHIAKI_EXPORT void VideoSetCallback(FrameCallback callback, void *userdata)
+{
+    g_ctx.callback = callback;
+    g_ctx.userdata = userdata;
+}
+
+CHIAKI_EXPORT void VideoCallbackFree()
+{
+    VideoCallbackInit(); // 重用初始化逻辑清理资源
+}
+
+CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame)
+{
+    if (!g_ctx.callback || !frame)
+        return;
+
+    // 检查是否需要重建SwsContext
+    if (!g_ctx.sws_ctx ||
+        g_ctx.last_width != frame->width ||
+        g_ctx.last_height != frame->height)
+    {
+        if (g_ctx.sws_ctx)
+            sws_freeContext(g_ctx.sws_ctx);
+
+        g_ctx.sws_ctx = sws_getContext(
+            frame->width, frame->height, (AVPixelFormat)frame->format,
+            frame->width, frame->height, AV_PIX_FMT_RGB24,
+            SWS_BILINEAR, NULL, NULL, NULL);
+
+        g_ctx.last_width = frame->width;
+        g_ctx.last_height = frame->height;
+    }
+
+    // 分配目标帧
+    AVFrame *rgb_frame = av_frame_alloc();
+    rgb_frame->format = AV_PIX_FMT_RGB24;
+    rgb_frame->width = frame->width;
+    rgb_frame->height = frame->height;
+    av_frame_get_buffer(rgb_frame, 0);
+
+    // 执行颜色空间转换
+    sws_scale(g_ctx.sws_ctx,
+              frame->data, frame->linesize, 0, frame->height,
+              rgb_frame->data, rgb_frame->linesize);
+
+    // 触发回调
+    if (g_ctx.callback)
+    {
+        g_ctx.callback(
+            rgb_frame->data[0],
+            rgb_frame->width,
+            rgb_frame->height,
+            rgb_frame->linesize[0],
+            g_ctx.userdata);
+    }
+
+}
 static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
 {
     ChiakiSession *sess = (ChiakiSession *)session;
-    CHIAKI_LOGI(sess->log, "FfmpegFrameCb called===============================\n");
+
+    if (!decoder)
+    {
+        CHIAKI_LOGE(sess->log, "Session has no FFmpeg decoder\n");
+        return;
+    }
+    int32_t frames_lost;
+    AVFrame *frame = chiaki_ffmpeg_decoder_pull_frame(decoder, &frames_lost);
+    if (!frame)
+        return;
+
+    // 手动定义支持零拷贝的格式数组
+    static const int zero_copy_formats[] = {
+        AV_PIX_FMT_VULKAN,
+#ifdef __linux__
+        AV_PIX_FMT_VAAPI,
+#endif
+        -1 // 数组结束标志
+    };
+
+    int i;
+    int zero_copy_supported = 0;
+    for (i = 0; zero_copy_formats[i] != -1; i++)
+    {
+        if (zero_copy_formats[i] == frame->format)
+        {
+            zero_copy_supported = 1;
+            break;
+        }
+    }
+
+    if (frame->hw_frames_ctx && (!zero_copy_supported || disable_zero_copy))
+    {
+        AVFrame *sw_frame = av_frame_alloc();
+        if (av_hwframe_transfer_data(sw_frame, frame, 0) < 0)
+        {
+            CHIAKI_LOGE(sess->log, "Failed to transfer frame from hardware\n");
+            av_frame_unref(frame);
+            av_frame_free(&sw_frame);
+            return;
+        }
+        av_frame_copy_props(sw_frame, frame);
+        av_frame_unref(frame);
+        frame = sw_frame;
+    }
+
+    // 在这里可以添加处理 frame 的代码
+    VideoProcessFrame(frame); // 只需添加这一行
+    // 释放 frame
+    av_frame_free(&frame);
 }
