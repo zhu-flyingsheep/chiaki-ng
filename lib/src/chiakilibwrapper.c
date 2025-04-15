@@ -253,7 +253,7 @@ CHIAKI_EXPORT bool wakeup_ps(const char *host, const char *regist_key, bool ps5,
     char *key = (char *)malloc(key_size + 1);
     if (key == NULL)
     {
-        CHIAKI_LOGE(sess->log, "Memory allocation failed");
+        CHIAKI_LOGE(log, "Memory allocation failed");
 
         return false;
     }
@@ -273,7 +273,7 @@ CHIAKI_EXPORT bool wakeup_ps(const char *host, const char *regist_key, bool ps5,
     credential = strtoull(key, &endptr, 16);
     if (*endptr != '\0' || key_size > 16)
     {
-        CHIAKI_LOGE(sess->log, "DiscoveryManager got invalid regist key for wakeup");
+        CHIAKI_LOGE(log, "DiscoveryManager got invalid regist key for wakeup");
         return false;
     }
 
@@ -290,7 +290,7 @@ CHIAKI_EXPORT bool wakeup_ps(const char *host, const char *regist_key, bool ps5,
 
     if (err != CHIAKI_ERR_SUCCESS)
     {
-        CHIAKI_LOGE(sess->log, "Failed to send Packet: %s\n", chiaki_error_string(err));
+        CHIAKI_LOGE(log, "Failed to send Packet: %s\n", chiaki_error_string(err));
         return false;
     }
 
@@ -685,7 +685,7 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
         }
     }
 
-    if (frame->hw_frames_ctx && (!zero_copy_supported || disable_zero_copy))
+    if (frame->hw_frames_ctx && (!zero_copy_supported ))
     {
         AVFrame *sw_frame = av_frame_alloc();
         if (av_hwframe_transfer_data(sw_frame, frame, 0) < 0)
