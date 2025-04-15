@@ -35,7 +35,7 @@ extern "C"
 
     // 帧处理入口函数 (需在获取AVFrame后调用)
     // param frame: 从FFmpeg获取的AVFrame指针
-    CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame);
+    CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame,enum AVPixelFormat  pixformat);
 
     CHIAKI_EXPORT ChiakiErrorCode discovery_ps(ChiakiDiscoveryServiceCb cb, ChiakiLog *log);
 

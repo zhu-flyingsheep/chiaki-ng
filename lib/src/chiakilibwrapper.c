@@ -605,7 +605,7 @@ CHIAKI_EXPORT void VideoCallbackFree()
     VideoCallbackInit(); // 重用初始化逻辑清理资源
 }
 
-CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame)
+CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame,enum AVPixelFormat  pixformat)
 {
     if (!g_ctx.callback || !frame)
         return;
@@ -619,8 +619,8 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame)
             sws_freeContext(g_ctx.sws_ctx);
 
         g_ctx.sws_ctx = sws_getContext(
-            frame->width, frame->height, (AVPixelFormat)frame->format,
-            frame->width, frame->height, (AVPixelFormat)frame->format,
+            frame->width, frame->height, pixformat,
+            frame->width, frame->height, pixformat,
             SWS_BILINEAR, NULL, NULL, NULL);
 
         g_ctx.last_width = frame->width;
@@ -629,7 +629,7 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame)
 
     // 分配目标帧
     AVFrame *rgb_frame = av_frame_alloc();
-    rgb_frame->format = (AVPixelFormat)frame->format;
+    rgb_frame->format = pixformat;
     rgb_frame->width = frame->width;
     rgb_frame->height = frame->height;
     av_frame_get_buffer(rgb_frame, 0);
@@ -699,9 +699,9 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
         av_frame_unref(frame);
         frame = sw_frame;
     }
-
+    enum AVPixelFormat pixformat=  chiaki_ffmpeg_decoder_get_pixel_format(decoder)
     // 在这里可以添加处理 frame 的代码
-    VideoProcessFrame(frame); // 只需添加这一行
+    VideoProcessFrame(frame,pixformat); // 只需添加这一行
     // 释放 frame
     av_frame_free(&frame);
 }
