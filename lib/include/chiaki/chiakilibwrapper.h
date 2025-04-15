@@ -50,9 +50,9 @@ extern "C"
                                           void *cb_user);
 
     // 全局回调变量
-    static FrameCallback g_frame_callback = nullptr;
-    static void *g_userdata = nullptr;
-    static struct SwsContext *g_sws_ctx = nullptr;
+    static FrameCallback g_frame_callback = NULL;
+    static void *g_userdata = NULL;
+    static struct SwsContext *g_sws_ctx = NULL;
     CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
                                              const char *string_rp_key,
                                              const char *rp_regist_key,

@@ -237,7 +237,7 @@ CHIAKI_EXPORT ChiakiErrorCode discovery_ps(ChiakiDiscoveryServiceCb cb, ChiakiLo
     if (err != CHIAKI_ERR_SUCCESS)
     {
         CHIAKI_LOGE(log, "DiscoveryManager failed to init Discovery Service IPV6");
-        service_active_ipv6 = false
+        service_active_ipv6 = false;
     }
     else
     {
@@ -577,7 +577,7 @@ static struct
 {
     FrameCallback callback;
     void *userdata;
-    SwsContext *sws_ctx;
+    struct SwsContext *sws_ctx;
     int last_width;
     int last_height;
 } g_ctx = {0};
