@@ -620,7 +620,7 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame)
 
         g_ctx.sws_ctx = sws_getContext(
             frame->width, frame->height, (AVPixelFormat)frame->format,
-            frame->width, frame->height, AV_PIX_FMT_RGB24,
+            frame->width, frame->height, (AVPixelFormat)frame->format,
             SWS_BILINEAR, NULL, NULL, NULL);
 
         g_ctx.last_width = frame->width;
@@ -629,7 +629,7 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame)
 
     // 分配目标帧
     AVFrame *rgb_frame = av_frame_alloc();
-    rgb_frame->format = AV_PIX_FMT_RGB24;
+    rgb_frame->format = (AVPixelFormat)frame->format;
     rgb_frame->width = frame->width;
     rgb_frame->height = frame->height;
     av_frame_get_buffer(rgb_frame, 0);
