@@ -699,7 +699,7 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
         av_frame_unref(frame);
         frame = sw_frame;
     }
-    enum AVPixelFormat pixformat=  chiaki_ffmpeg_decoder_get_pixel_format(decoder)
+    enum AVPixelFormat pixformat=  chiaki_ffmpeg_decoder_get_pixel_format(decoder);
     // 在这里可以添加处理 frame 的代码
     VideoProcessFrame(frame,pixformat); // 只需添加这一行
     // 释放 frame
