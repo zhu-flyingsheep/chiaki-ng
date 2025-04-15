@@ -6,6 +6,7 @@
 #include "regist.h"
 #include "session.h"
 #include "ffmpegdecoder.h"
+#include <libswscale/swscale.h>
 
 #ifdef __cplusplus
 extern "C"
