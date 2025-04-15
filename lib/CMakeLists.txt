@@ -199,7 +199,7 @@ target_link_libraries(chiaki-lib Nanopb::nanopb)
 target_link_libraries(chiaki-lib Jerasure::Jerasure)
 
 if(CHIAKI_ENABLE_FFMPEG_DECODER)
-	target_link_libraries(chiaki-lib FFMPEG::avcodec FFMPEG::avutil)
+	target_link_libraries(chiaki-lib FFMPEG::avcodec FFMPEG::avutil FFMPEG::swscale)
 endif()
 
 if(CHIAKI_ENABLE_PI_DECODER)
