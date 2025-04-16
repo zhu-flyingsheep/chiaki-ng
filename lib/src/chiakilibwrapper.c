@@ -658,53 +658,9 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame, enum AVPixelFormat pixforma
     sws_freeContext(sws_ctx);
 }
 
-{
-    if (!g_ctx.callback || !frame)
-        return;
 
-    // 检查是否需要重建SwsContext
-    if (!g_ctx.sws_ctx ||
-        g_ctx.last_width != frame->width ||
-        g_ctx.last_height != frame->height)
-    {
-        if (g_ctx.sws_ctx)
-            sws_freeContext(g_ctx.sws_ctx);
 
-        g_ctx.sws_ctx = sws_getContext(
-            frame->width, frame->height, pixformat,
-            frame->width, frame->height, AV_PIX_FMT_BGR24,
-            SWS_BILINEAR, NULL, NULL, NULL);
 
-        g_ctx.last_width = frame->width;
-        g_ctx.last_height = frame->height;
-    }
-
-    // 分配目标帧
-    AVFrame *rgb_frame = av_frame_alloc();
-    rgb_frame->format = AV_PIX_FMT_BGR24;
-    rgb_frame->width = frame->width;
-    rgb_frame->height = frame->height;
-    av_frame_get_buffer(rgb_frame, 0);
-
-    // 执行颜色空间转换
-    sws_scale(g_ctx.sws_ctx,
-              frame->data, frame->linesize, 0, frame->height,
-              rgb_frame->data, rgb_frame->linesize);
-
-    // 触发回调
-    if (g_ctx.callback)
-    {
-        g_ctx.callback(
-            rgb_frame->data[0],
-            rgb_frame->width,
-            rgb_frame->height,
-            rgb_frame->linesize[0],
-            g_ctx.userdata);
-    }
-     // 释放 rgb_frame 占用的内存
-     av_frame_free(&rgb_frame);
-
-}
 
 static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
 {
