@@ -649,6 +649,8 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame,enum AVPixelFormat  pixforma
             rgb_frame->linesize[0],
             g_ctx.userdata);
     }
+     // 释放 rgb_frame 占用的内存
+     av_frame_free(&rgb_frame);
 
 }
 
