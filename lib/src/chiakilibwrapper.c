@@ -605,7 +605,60 @@ CHIAKI_EXPORT void VideoCallbackFree()
     VideoCallbackInit(); // 重用初始化逻辑清理资源
 }
 
-CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame,enum AVPixelFormat  pixformat)
+CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame, enum AVPixelFormat pixformat)
+{
+    if (!g_ctx.callback || !frame)
+        return;
+
+    // 每次临时创建 SwsContext，避免全局缓存
+    struct SwsContext *sws_ctx = sws_getContext(
+        frame->width, frame->height, pixformat,
+        frame->width, frame->height, AV_PIX_FMT_BGR24,
+        SWS_BILINEAR, NULL, NULL, NULL);
+    if (!sws_ctx)
+    {
+        CHIAKI_LOGE(g_ctx.log, "Failed to create SwsContext\n");
+        return;
+    }
+
+    AVFrame *rgb_frame = av_frame_alloc();
+    if (!rgb_frame)
+    {
+        sws_freeContext(sws_ctx);
+        return;
+    }
+
+    rgb_frame->format = AV_PIX_FMT_BGR24;
+    rgb_frame->width = frame->width;
+    rgb_frame->height = frame->height;
+
+    if (av_frame_get_buffer(rgb_frame, 0) < 0)
+    {
+        CHIAKI_LOGE(g_ctx.log, "Failed to allocate RGB frame buffer\n");
+        av_frame_free(&rgb_frame);
+        sws_freeContext(sws_ctx);
+        return;
+    }
+
+    sws_scale(sws_ctx,
+              frame->data, frame->linesize, 0, frame->height,
+              rgb_frame->data, rgb_frame->linesize);
+
+    if (g_ctx.callback)
+    {
+        g_ctx.callback(
+            rgb_frame->data[0],
+            rgb_frame->width,
+            rgb_frame->height,
+            rgb_frame->linesize[0],
+            g_ctx.userdata);
+    }
+
+    // 强制释放内存
+    av_frame_unref(rgb_frame);
+    av_frame_free(&rgb_frame);
+    sws_freeContext(sws_ctx);
+}
 {
     if (!g_ctx.callback || !frame)
         return;
@@ -704,7 +757,7 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
     }
     enum AVPixelFormat pixformat=  chiaki_ffmpeg_decoder_get_pixel_format(decoder);
     // 在这里可以添加处理 frame 的代码
-    // VideoProcessFrame(frame,pixformat); // 只需添加这一行
+    VideoProcessFrame(frame,pixformat); // 只需添加这一行
     // 释放 frame
     av_frame_free(&frame);
 }
