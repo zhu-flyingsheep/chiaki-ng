@@ -644,12 +644,14 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame, enum AVPixelFormat pixforma
 
     if (g_ctx.callback)
     {
+        
         // 复制数据到新缓冲区
         int buffer_size = rgb_frame->linesize[0] * rgb_frame->height;
         uint8_t *managed_buffer = (uint8_t *)malloc(buffer_size);
         memcpy(managed_buffer, rgb_frame->data[0], buffer_size);
         int width = rgb_frame->width;
         int height = rgb_frame->height;
+        int stride = rgb_frame->linesize[0]; // 每行字节数
         // 调用 C# 回调并传递复制的数据
         g_ctx.callback(managed_buffer, width, height, stride, g_ctx.userdata);
     }
