@@ -644,12 +644,14 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame, enum AVPixelFormat pixforma
 
     if (g_ctx.callback)
     {
-        g_ctx.callback(
-            rgb_frame->data[0],
-            rgb_frame->width,
-            rgb_frame->height,
-            rgb_frame->linesize[0],
-            g_ctx.userdata);
+        // 复制数据到新缓冲区
+        int buffer_size = rgb_frame->linesize[0] * rgb_frame->height;
+        uint8_t *managed_buffer = (uint8_t *)malloc(buffer_size);
+        memcpy(managed_buffer, rgb_frame->data[0], buffer_size);
+        int width = rgb_frame->width;
+        int height = rgb_frame->height;
+        // 调用 C# 回调并传递复制的数据
+        g_ctx.callback(managed_buffer, width, height, stride, g_ctx.userdata);
     }
 
     // 强制释放内存
@@ -657,10 +659,6 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame, enum AVPixelFormat pixforma
     av_frame_free(&rgb_frame);
     sws_freeContext(sws_ctx);
 }
-
-
-
-
 
 static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
 {
@@ -696,7 +694,7 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
         }
     }
 
-    if (frame->hw_frames_ctx && (!zero_copy_supported ))
+    if (frame->hw_frames_ctx && (!zero_copy_supported))
     {
         AVFrame *sw_frame = av_frame_alloc();
         if (av_hwframe_transfer_data(sw_frame, frame, 0) < 0)
@@ -710,9 +708,9 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
         av_frame_unref(frame);
         frame = sw_frame;
     }
-    enum AVPixelFormat pixformat=  chiaki_ffmpeg_decoder_get_pixel_format(decoder);
+    enum AVPixelFormat pixformat = chiaki_ffmpeg_decoder_get_pixel_format(decoder);
     // 在这里可以添加处理 frame 的代码
-    VideoProcessFrame(frame,pixformat); // 只需添加这一行
+    VideoProcessFrame(frame, pixformat); // 只需添加这一行
     // 释放 frame
     av_frame_free(&frame);
 }
