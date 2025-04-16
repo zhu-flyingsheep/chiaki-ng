@@ -617,7 +617,6 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame, enum AVPixelFormat pixforma
         SWS_BILINEAR, NULL, NULL, NULL);
     if (!sws_ctx)
     {
-        CHIAKI_LOGE(g_ctx.log, "Failed to create SwsContext\n");
         return;
     }
 
@@ -634,7 +633,6 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame, enum AVPixelFormat pixforma
 
     if (av_frame_get_buffer(rgb_frame, 0) < 0)
     {
-        CHIAKI_LOGE(g_ctx.log, "Failed to allocate RGB frame buffer\n");
         av_frame_free(&rgb_frame);
         sws_freeContext(sws_ctx);
         return;
@@ -659,6 +657,7 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame, enum AVPixelFormat pixforma
     av_frame_free(&rgb_frame);
     sws_freeContext(sws_ctx);
 }
+
 {
     if (!g_ctx.callback || !frame)
         return;
