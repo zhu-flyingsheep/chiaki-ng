@@ -620,7 +620,7 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame,enum AVPixelFormat  pixforma
 
         g_ctx.sws_ctx = sws_getContext(
             frame->width, frame->height, pixformat,
-            frame->width, frame->height, pixformat,
+            frame->width, frame->height, AV_PIX_FMT_BGR24,
             SWS_BILINEAR, NULL, NULL, NULL);
 
         g_ctx.last_width = frame->width;
@@ -629,7 +629,7 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame,enum AVPixelFormat  pixforma
 
     // 分配目标帧
     AVFrame *rgb_frame = av_frame_alloc();
-    rgb_frame->format = pixformat;
+    rgb_frame->format = AV_PIX_FMT_BGR24;
     rgb_frame->width = frame->width;
     rgb_frame->height = frame->height;
     av_frame_get_buffer(rgb_frame, 0);
@@ -651,6 +651,7 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame,enum AVPixelFormat  pixforma
     }
 
 }
+
 static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
 {
     ChiakiSession *sess = (ChiakiSession *)session;
