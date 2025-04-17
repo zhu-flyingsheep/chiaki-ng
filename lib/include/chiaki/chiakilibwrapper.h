@@ -19,7 +19,7 @@ extern "C"
     // param height:   帧高度
     // param stride:   每行字节数 (通常为width*3)
     // param userdata: 用户自定义指针 (用于传递C#对象上下文)
-    typedef void (*FrameCallback)(const uint8_t *data, int width, int height, int stride, void *userdata);
+    typedef void (*FrameCallback)(const uint8_t *data, int width, int height, int stride, void *userdata, void *release_func);
 
     // 初始化视频回调系统 (需在调用其他函数前执行)
     // return: 0成功, 非零错误码
