@@ -627,7 +627,7 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame, enum AVPixelFormat pixforma
     struct SwsContext *sws_ctx = sws_getContext(
         frame->width, frame->height, pixformat,
         frame->width, frame->height, AV_PIX_FMT_BGR24,
-        SWS_BICUBIC, NULL, NULL, NULL);
+        SWS_POINT, NULL, NULL, NULL);
     if (!sws_ctx)
     {
         return;
