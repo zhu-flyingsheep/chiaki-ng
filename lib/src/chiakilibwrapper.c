@@ -605,12 +605,6 @@ CHIAKI_EXPORT void VideoCallbackFree()
     VideoCallbackInit(); // 重用初始化逻辑清理资源
 }
 
-
-
-
-
-
-
 // 全局变量保存当前待释放的帧（仅支持单帧活跃）
 static AVFrame *g_current_rgb_frame = NULL;
 
@@ -660,8 +654,8 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame, enum AVPixelFormat pixforma
     sws_scale(sws_ctx,
               frame->data, frame->linesize, 0, frame->height,
               rgb_frame->data, rgb_frame->linesize);
- // 保存当前帧
- g_current_rgb_frame = rgb_frame;
+    // 保存当前帧
+    g_current_rgb_frame = rgb_frame;
     if (g_ctx.callback)
     {
         g_ctx.callback(
@@ -670,19 +664,11 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame, enum AVPixelFormat pixforma
             rgb_frame->height,
             rgb_frame->linesize[0],
             g_ctx.userdata,
-            (void *)ReleaseCurrentFrame // 直接传递释放函数指针 
-            );
+            (void *)ReleaseCurrentFrame // 直接传递释放函数指针
+        );
     }
-
-    // 强制释放内存
-    av_frame_unref(rgb_frame);
-    av_frame_free(&rgb_frame);
     sws_freeContext(sws_ctx);
 }
-
-
-
-
 
 static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
 {
@@ -718,7 +704,7 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
         }
     }
 
-    if (frame->hw_frames_ctx && (!zero_copy_supported ))
+    if (frame->hw_frames_ctx && (!zero_copy_supported))
     {
         AVFrame *sw_frame = av_frame_alloc();
         if (av_hwframe_transfer_data(sw_frame, frame, 0) < 0)
@@ -732,9 +718,9 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
         av_frame_unref(frame);
         frame = sw_frame;
     }
-    enum AVPixelFormat pixformat=  chiaki_ffmpeg_decoder_get_pixel_format(decoder);
+    enum AVPixelFormat pixformat = chiaki_ffmpeg_decoder_get_pixel_format(decoder);
     // 在这里可以添加处理 frame 的代码
-    VideoProcessFrame(frame,pixformat); // 只需添加这一行
+    VideoProcessFrame(frame, pixformat); // 只需添加这一行
     // 释放 frame
     av_frame_free(&frame);
 }
