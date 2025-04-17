@@ -607,6 +607,13 @@ CHIAKI_EXPORT void VideoCallbackFree()
 
 
 
+
+
+
+
+// 全局变量保存当前待释放的帧（仅支持单帧活跃）
+static AVFrame *g_current_rgb_frame = NULL;
+
 // 释放当前帧的导出函数
 CHIAKI_EXPORT void ReleaseCurrentFrame()
 {
@@ -617,10 +624,6 @@ CHIAKI_EXPORT void ReleaseCurrentFrame()
     }
 }
 
-
-
-// 全局变量保存当前待释放的帧（仅支持单帧活跃）
-static AVFrame *g_current_rgb_frame = NULL;
 CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame, enum AVPixelFormat pixformat)
 {
     if (!g_ctx.callback || !frame)
