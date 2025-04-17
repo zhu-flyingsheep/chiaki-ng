@@ -32,7 +32,7 @@ extern "C"
 
     // 清理视频回调系统资源
     CHIAKI_EXPORT void VideoCallbackFree();
-
+    CHIAKI_EXPORT void ReleaseCurrentFrame(); // 释放当前帧的导出函数
     // 帧处理入口函数 (需在获取AVFrame后调用)
     // param frame: 从FFmpeg获取的AVFrame指针
     CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame,enum AVPixelFormat  pixformat);
