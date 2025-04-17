@@ -626,7 +626,7 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame, enum AVPixelFormat pixforma
     // 每次临时创建 SwsContext，避免全局缓存
     struct SwsContext *sws_ctx = sws_getContext(
         frame->width, frame->height, pixformat,
-        frame->width, frame->height, AV_PIX_FMT_BGR48,
+        frame->width, frame->height, AV_PIX_FMT_BGR24,
         SWS_BICUBIC, NULL, NULL, NULL);
     if (!sws_ctx)
     {
@@ -640,7 +640,7 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame, enum AVPixelFormat pixforma
         return;
     }
 
-    rgb_frame->format = AV_PIX_FMT_BGR48;
+    rgb_frame->format = AV_PIX_FMT_BGR24;
     rgb_frame->width = frame->width;
     rgb_frame->height = frame->height;
 
