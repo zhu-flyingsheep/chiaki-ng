@@ -508,13 +508,13 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
     memset(&connect_info.video_profile, 0, sizeof(connect_info.video_profile));
     connect_info.video_profile.width = 1280;
     connect_info.video_profile.height = 720;
-    connect_info.video_profile.max_fps = 60;
-    connect_info.video_profile.bitrate = 1000;
+    connect_info.video_profile.max_fps = 30;
+    connect_info.video_profile.bitrate = 10000;
     connect_info.video_profile.codec = CHIAKI_CODEC_H264;
     connect_info.video_profile_auto_downgrade = true;
     connect_info.enable_keyboard = false;
     connect_info.enable_dualsense = true;
-    connect_info.audio_video_disabled = CHIAKI_NONE_DISABLED;
+    connect_info.audio_video_disabled = CHIAKI_AUDIO_DISABLED;
 
     connect_info.packet_loss_max = 0.050000f;
     ChiakiErrorCode err;
@@ -627,7 +627,7 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame, enum AVPixelFormat pixforma
     struct SwsContext *sws_ctx = sws_getContext(
         frame->width, frame->height, pixformat,
         frame->width, frame->height, AV_PIX_FMT_BGR24,
-        SWS_POINT, NULL, NULL, NULL);
+        SWS_BILINEAR, NULL, NULL, NULL);
     if (!sws_ctx)
     {
         return;
