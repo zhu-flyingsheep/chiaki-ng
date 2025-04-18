@@ -126,7 +126,7 @@ CHIAKI_EXPORT bool chiaki_ffmpeg_decoder_video_sample_cb(uint8_t *buf, size_t bu
 {
 	ChiakiFfmpegDecoder *decoder = user;
 
-	CHIAKI_LOGI(decoder->log, "chiaki_ffmpeg_decoder_video_sample_cb===========================\n");
+	CHIAKI_LOGI(decoder->log, "chiaki_ffmpeg_decoder_video_sample_cb===========================");
 
 	chiaki_mutex_lock(&decoder->mutex);
 	decoder->frames_lost += frames_lost;

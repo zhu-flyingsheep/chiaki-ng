@@ -179,6 +179,7 @@ static ChiakiErrorCode chiaki_video_receiver_flush_frame(ChiakiVideoReceiver *vi
 
 	bool succ = flush_result != CHIAKI_FRAME_PROCESSOR_FLUSH_RESULT_FEC_FAILED;
 	bool recovered = false;
+	CHIAKI_LOGW(video_receiver->log, "========success: %d, recovered: %d,frames_lost:%d", succ, recovered,video_receiver->frames_lost);
 
 	ChiakiBitstreamSlice slice;
 	if(chiaki_bitstream_slice(&video_receiver->bitstream, frame, frame_size, &slice))
@@ -195,7 +196,10 @@ static ChiakiErrorCode chiaki_video_receiver_flush_frame(ChiakiVideoReceiver *vi
 					{
 						if(chiaki_bitstream_slice_set_reference_frame(&video_receiver->bitstream, frame, frame_size, i))
 						{
+
 							recovered = true;
+							CHIAKI_LOGW(video_receiver->log, "========success1: %d, recovered1: %d,frames_lost", succ, recovered,video_receiver->frames_lost);
+
 							CHIAKI_LOGW(video_receiver->log, "Missing reference frame %d for decoding frame %d -> changed to %d", (int)ref_frame_index, (int)video_receiver->frame_index_cur, (int)ref_frame_index_new);
 						}
 						break;
@@ -203,8 +207,11 @@ static ChiakiErrorCode chiaki_video_receiver_flush_frame(ChiakiVideoReceiver *vi
 				}
 				if(!recovered)
 				{
+
 					succ = false;
 					video_receiver->frames_lost++;
+					CHIAKI_LOGW(video_receiver->log, "========success2: %d, recovered2: %d,frames_lost:%d", succ, recovered,video_receiver->frames_lost);
+
 					CHIAKI_LOGW(video_receiver->log, "Missing reference frame %d for decoding frame %d", (int)ref_frame_index, (int)video_receiver->frame_index_cur);
 				}
 			}
