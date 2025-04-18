@@ -269,9 +269,9 @@ CHIAKI_EXPORT ChiakiFrameProcessorFlushResult chiaki_frame_processor_flush(Chiak
 	if(frame_processor->units_source_expected == 0 || frame_processor->flushed)
 		return CHIAKI_FRAME_PROCESSOR_FLUSH_RESULT_FAILED;
 
-	//CHIAKI_LOGD(NULL, "source: %u, fec: %u",
-	//		frame_processor->units_source_expected,
-	//		frame_processor->units_fec_expected);
+	CHIAKI_LOGI(NULL, "source: %u, fec: %u",
+			frame_processor->units_source_expected,
+			frame_processor->units_fec_expected);
 
 	ChiakiFrameProcessorFlushResult result = CHIAKI_FRAME_PROCESSOR_FLUSH_RESULT_SUCCESS;
 	if(frame_processor->units_source_received < frame_processor->units_source_expected)
