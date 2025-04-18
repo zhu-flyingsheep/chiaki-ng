@@ -1783,6 +1783,7 @@ void StreamSession::SdeckQueueHaptics(haptic_packet_t packetl, haptic_packet_t p
 
 void StreamSession::Event(ChiakiEvent *event)
 {
+	qDebug() << "Event============" << event->type;
 	switch(event->type)
 	{
 		case CHIAKI_EVENT_CONNECTED:
