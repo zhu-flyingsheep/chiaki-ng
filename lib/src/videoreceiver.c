@@ -217,9 +217,14 @@ static ChiakiErrorCode chiaki_video_receiver_flush_frame(ChiakiVideoReceiver *vi
 					CHIAKI_LOGW(video_receiver->log, "========success2: %d, recovered2: %d,frames_lost:%d", succ, recovered,video_receiver->frames_lost);
 
 					CHIAKI_LOGW(video_receiver->log, "Missing reference frame %d for decoding frame %d", (int)ref_frame_index, (int)video_receiver->frame_index_cur);
+				}else{
+					CHIAKI_LOGW(video_receiver->log, "========success3: %d, recovered2: %d,frames_lost:%d", succ, recovered,video_receiver->frames_lost);
+
 				}
 			}
 		}
+	}else{
+		CHIAKI_LOGW(video_receiver->log, "====== chiaki_bitstream_slice return false");
 	}
 
 	if(succ && video_receiver->session->video_sample_cb)
