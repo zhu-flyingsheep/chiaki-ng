@@ -186,6 +186,7 @@ static ChiakiErrorCode chiaki_video_receiver_flush_frame(ChiakiVideoReceiver *vi
 	{
 		if(slice.slice_type == CHIAKI_BITSTREAM_SLICE_P)
 		{
+			CHIAKI_LOGW(video_receiver->log, "====== slice.slice_type==CHIAKI_BITSTREAM_SLICE_P");
 			ChiakiSeqNum16 ref_frame_index = video_receiver->frame_index_cur - slice.reference_frame - 1;
 			if(slice.reference_frame != 0xff && !have_ref_frame(video_receiver, ref_frame_index))
 			{
@@ -207,6 +208,8 @@ static ChiakiErrorCode chiaki_video_receiver_flush_frame(ChiakiVideoReceiver *vi
 
 						}
 						break;
+					}else{
+						CHIAKI_LOGW(video_receiver->log, "========have_ref_frame return false %d codec:",(&video_receiver->bitstream)->codec);
 					}
 				}
 				if(!recovered)
@@ -221,7 +224,11 @@ static ChiakiErrorCode chiaki_video_receiver_flush_frame(ChiakiVideoReceiver *vi
 					CHIAKI_LOGW(video_receiver->log, "========success3: %d, recovered2: %d,frames_lost:%d", succ, recovered,video_receiver->frames_lost);
 
 				}
+			}else{
+				CHIAKI_LOGW(video_receiver->log, "====== slice.reference_frame==0xff or have_ref_frame %d", (int)ref_frame_index);
 			}
+		}else{
+			CHIAKI_LOGW(video_receiver->log, "====== slice.slice_type!=CHIAKI_BITSTREAM_SLICE_P");
 		}
 	}else{
 		CHIAKI_LOGW(video_receiver->log, "====== chiaki_bitstream_slice return false");
