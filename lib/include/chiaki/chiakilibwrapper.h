@@ -54,6 +54,7 @@ extern "C"
     static FrameCallback g_frame_callback = NULL;
     static void *g_userdata = NULL;
     static struct SwsContext *g_sws_ctx = NULL;
+    static ChiakiFfmpegDecoder *ffmpeg_decoder;
     CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
                                              const char *string_rp_key,
                                              const char *rp_regist_key,

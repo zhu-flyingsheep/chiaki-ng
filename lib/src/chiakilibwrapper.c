@@ -503,12 +503,11 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
     connect_info.ps5 = chiaki_target_is_ps5(target);
     connect_info.auto_regist = false;
     connect_info.holepunch_session = false;
-    connect_info.packet_loss_max = 0.0f;
 
     memset(&connect_info.video_profile, 0, sizeof(connect_info.video_profile));
     connect_info.video_profile.width = 1280;
     connect_info.video_profile.height = 720;
-    connect_info.video_profile.max_fps = 30;
+    connect_info.video_profile.max_fps = 10;
     connect_info.video_profile.bitrate = 10000;
     connect_info.video_profile.codec = CHIAKI_CODEC_H264;
     connect_info.video_profile_auto_downgrade = true;
@@ -530,7 +529,7 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
         return err;
     }
 
-    ChiakiFfmpegDecoder *ffmpeg_decoder = (ChiakiFfmpegDecoder *)malloc(sizeof(ChiakiFfmpegDecoder));
+    ffmpeg_decoder= (ChiakiFfmpegDecoder *)malloc(sizeof(ChiakiFfmpegDecoder));
     if (ffmpeg_decoder == NULL)
     {
         CHIAKI_LOGE(log, "ffmpeg_decoder malloc failed");
@@ -681,6 +680,8 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
     }
     int32_t frames_lost;
     AVFrame *frame = chiaki_ffmpeg_decoder_pull_frame(decoder, &frames_lost);
+    CHIAKI_LOGI(sess->log, "frames_lost: %d", frames_lost);
+
     if (!frame)
         return;
 
