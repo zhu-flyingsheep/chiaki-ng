@@ -187,28 +187,28 @@ static ChiakiErrorCode chiaki_video_receiver_flush_frame(ChiakiVideoReceiver *vi
 		{
 			ChiakiSeqNum16 ref_frame_index = video_receiver->frame_index_cur - slice.reference_frame - 1;
 			CHIAKI_LOGW(video_receiver->log, "====Slice reference frame %d for decoding frame %d", (int)ref_frame_index, (int)video_receiver->frame_index_cur);
-			if(slice.reference_frame != 0xff && !have_ref_frame(video_receiver, ref_frame_index))
-			{
-				for(unsigned i=slice.reference_frame+1; i<16; i++)
-				{
-					ChiakiSeqNum16 ref_frame_index_new = video_receiver->frame_index_cur - i - 1;
-					if(have_ref_frame(video_receiver, ref_frame_index_new))
-					{
-						if(chiaki_bitstream_slice_set_reference_frame(&video_receiver->bitstream, frame, frame_size, i))
-						{
-							recovered = true;
-							CHIAKI_LOGW(video_receiver->log, "Missing reference frame %d for decoding frame %d -> changed to %d", (int)ref_frame_index, (int)video_receiver->frame_index_cur, (int)ref_frame_index_new);
-						}
-						break;
-					}
-				}
-				if(!recovered)
-				{
-					succ = false;
-					video_receiver->frames_lost++;
-					CHIAKI_LOGW(video_receiver->log, "Missing reference frame %d for decoding frame %d", (int)ref_frame_index, (int)video_receiver->frame_index_cur);
-				}
-			}
+			// if(slice.reference_frame != 0xff && !have_ref_frame(video_receiver, ref_frame_index))
+			// {
+			// 	for(unsigned i=slice.reference_frame+1; i<16; i++)
+			// 	{
+			// 		ChiakiSeqNum16 ref_frame_index_new = video_receiver->frame_index_cur - i - 1;
+			// 		if(have_ref_frame(video_receiver, ref_frame_index_new))
+			// 		{
+			// 			if(chiaki_bitstream_slice_set_reference_frame(&video_receiver->bitstream, frame, frame_size, i))
+			// 			{
+			// 				recovered = true;
+			// 				CHIAKI_LOGW(video_receiver->log, "Missing reference frame %d for decoding frame %d -> changed to %d", (int)ref_frame_index, (int)video_receiver->frame_index_cur, (int)ref_frame_index_new);
+			// 			}
+			// 			break;
+			// 		}
+			// 	}
+			// 	if(!recovered)
+			// 	{
+			// 		succ = false;
+			// 		video_receiver->frames_lost++;
+			// 		CHIAKI_LOGW(video_receiver->log, "Missing reference frame %d for decoding frame %d", (int)ref_frame_index, (int)video_receiver->frame_index_cur);
+			// 	}
+			// }
 		}
 	}
 
