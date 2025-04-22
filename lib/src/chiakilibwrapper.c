@@ -739,7 +739,7 @@ CHIAKI_EXPORT void goto_bed()
     chiaki_session_goto_bed(&session);
 }
 
-CHIAKI_EXPORT void sendButton(uint32_t buttonMask, unsigned int sleepTimeMs)
+CHIAKI_EXPORT void sendControllButton(uint32_t buttonMask, unsigned int sleepTimeMs)
 {
     ChiakiControllerState state;
     // 1. 清空所有输入
@@ -747,6 +747,29 @@ CHIAKI_EXPORT void sendButton(uint32_t buttonMask, unsigned int sleepTimeMs)
 
     // 2. 设置按键按下
     state.buttons = buttonMask;
+    chiaki_session_set_controller_state(session, &state);
+
+#ifdef _WIN32
+    Sleep(sleepTimeMs); // Windows 下使用 Sleep 函数暂停指定毫秒数
+#else
+    usleep(sleepTimeMs * 1000); // Linux 下使用 usleep 函数暂停指定毫秒数，注意 usleep 参数单位是微秒
+#endif
+
+    // 松开
+    chiaki_controller_state_set_idle(&state);
+    chiaki_session_set_controller_state(session, &state);
+}
+
+
+CHIAKI_EXPORT void sendControllAnlogButton(uint32_t buttonMask, unsigned int sleepTimeMs,uint8_t strength)
+{
+    ChiakiControllerState state;
+    // 1. 清空所有输入
+    chiaki_controller_state_set_idle(&state);
+
+     // 2. 标记模拟按钮并设置力度
+     state.buttons |= buttonMask;
+     state.l2_state = strength;
     chiaki_session_set_controller_state(session, &state);
 
 #ifdef _WIN32
