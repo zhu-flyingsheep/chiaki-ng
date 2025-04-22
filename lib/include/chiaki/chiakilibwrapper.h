@@ -51,7 +51,7 @@ extern "C"
     CHIAKI_EXPORT void goto_bed();
 
     CHIAKI_EXPORT void sendControllButton(uint32_t buttonMask, unsigned int sleepTimeMs);
-    CHIAKI_EXPORT void sendControllAnlogButton(uint32_t buttonMask, unsigned int sleepTimeMs,uint8_t strength)
+    CHIAKI_EXPORT void sendControllAnlogButton(uint32_t buttonMask, unsigned int sleepTimeMs,uint8_t strength);
 
 #ifdef __cplusplus
 }
