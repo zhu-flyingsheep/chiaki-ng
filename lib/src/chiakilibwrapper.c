@@ -513,7 +513,7 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
     memset(&connect_info.video_profile, 0, sizeof(connect_info.video_profile));
     connect_info.video_profile.width = 1280;
     connect_info.video_profile.height = 720;
-    connect_info.video_profile.max_fps = 10;
+    connect_info.video_profile.max_fps = 3;
     connect_info.video_profile.bitrate = 10000;
     connect_info.video_profile.codec = CHIAKI_CODEC_H264;
     connect_info.video_profile_auto_downgrade = true;
