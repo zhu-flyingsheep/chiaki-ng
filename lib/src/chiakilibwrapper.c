@@ -24,6 +24,12 @@
 #define HOSTS_MAX 16
 #define DROP_PINGS 3
 
+static void CantDisplayCb(void *user, bool cant_display);
+static void EventCb(ChiakiEvent *event, void *user);
+static void AudioSettingsCb(uint32_t channels, uint32_t rate, void *user);
+static void AudioFrameCb(int16_t *buf, size_t samples_count, void *user);
+static void HapticsFrameCb(uint8_t *buf, size_t buf_size, void *user);
+
 // 假设的全局变量
 ChiakiDiscoveryService service;
 ChiakiDiscoveryService service_ipv6;
@@ -559,6 +565,13 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
         return err;
     }
 
+    ChiakiCtrlDisplaySink display_sink;
+	display_sink.user = NULL;
+	display_sink.cantdisplay_cb = CantDisplayCb;
+	chiaki_session_ctrl_set_display_sink(&session, &display_sink);
+
+
+
     chiaki_session_set_video_sample_cb(session, chiaki_ffmpeg_decoder_video_sample_cb, ffmpeg_decoder);
 
     err = chiaki_session_start(session);
@@ -569,6 +582,31 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
         return err;
     }
     return CHIAKI_ERR_SUCCESS; // 返回成功状态
+}
+
+static void CantDisplayCb(void *user, bool cant_display)
+{
+
+}
+
+static void EventCb(ChiakiEvent *event, void *user)
+{
+	
+}
+
+static void AudioSettingsCb(uint32_t channels, uint32_t rate, void *user)
+{
+
+}
+
+static void AudioFrameCb(int16_t *buf, size_t samples_count, void *user)
+{
+	
+}
+
+static void HapticsFrameCb(uint8_t *buf, size_t buf_size, void *user)
+{
+
 }
 
 // 全局状态
@@ -654,7 +692,7 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame, enum AVPixelFormat pixforma
               frame->data, frame->linesize, 0, frame->height,
               rgb_frame->data, rgb_frame->linesize);
     // 保存当前帧
-    g_current_rgb_frame = rgb_frame;
+    // g_current_rgb_frame = rgb_frame;
     if (g_ctx.callback)
     {
         g_ctx.callback(
@@ -666,6 +704,8 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame, enum AVPixelFormat pixforma
             (void *)ReleaseCurrentFrame // 直接传递释放函数指针
         );
     }
+    av_frame_unref(rgb_frame); // 释放引用计数
+    av_frame_free(&rgb_frame); // 释放临时帧
     sws_freeContext(sws_ctx);
 }
 
