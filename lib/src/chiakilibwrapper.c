@@ -494,12 +494,13 @@ void hex_string_to_uint8_array(const char *str, uint8_t *arr, size_t arr_size)
 
 static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user);
 
-CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
-                                         const char *string_rp_key,
-                                         const char *string_rp_regist_key,
-                                         ChiakiTarget target,
-                                         ChiakiLog *log)
+CHIAKI_EXPORT ChiakiErrorCode start_session(const char *host,
+                                            const char *string_rp_key,
+                                            const char *string_rp_regist_key,
+                                            ChiakiTarget target,
+                                            ChiakiLog *log)
 {
+    chiaki_mutex_init(&frame_mutex, false)
     uint8_t morning[16];
     uint8_t regist_key[16];
     // 十六进制字符串转 uint8_t 数组
@@ -537,7 +538,7 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
         return err;
     }
 
-    ffmpeg_decoder= (ChiakiFfmpegDecoder *)malloc(sizeof(ChiakiFfmpegDecoder));
+    ffmpeg_decoder = (ChiakiFfmpegDecoder *)malloc(sizeof(ChiakiFfmpegDecoder));
     if (ffmpeg_decoder == NULL)
     {
         CHIAKI_LOGE(log, "ffmpeg_decoder malloc failed");
@@ -568,11 +569,9 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
     }
 
     ChiakiCtrlDisplaySink display_sink;
-	display_sink.user = NULL;
-	display_sink.cantdisplay_cb = CantDisplayCb;
-	chiaki_session_ctrl_set_display_sink(&session, &display_sink);
-
-
+    display_sink.user = NULL;
+    display_sink.cantdisplay_cb = CantDisplayCb;
+    chiaki_session_ctrl_set_display_sink(&session, &display_sink);
 
     chiaki_session_set_video_sample_cb(session, chiaki_ffmpeg_decoder_video_sample_cb, ffmpeg_decoder);
 
@@ -588,95 +587,66 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
 
 static void CantDisplayCb(void *user, bool cant_display)
 {
-
 }
 
 static void EventCb(ChiakiEvent *event, void *user)
 {
-	
 }
 
 static void AudioSettingsCb(uint32_t channels, uint32_t rate, void *user)
 {
-
 }
 
 static void AudioFrameCb(int16_t *buf, size_t samples_count, void *user)
 {
-	
 }
 
 static void HapticsFrameCb(uint8_t *buf, size_t buf_size, void *user)
 {
-
 }
 
-// 全局状态
-static struct
-{
-    FrameCallback callback;
-    void *userdata;
-    struct SwsContext *sws_ctx;
-    int last_width;
-    int last_height;
-} g_ctx = {0};
-
-CHIAKI_EXPORT int VideoCallbackInit()
-{
-    if (g_ctx.sws_ctx)
-    {
-        sws_freeContext(g_ctx.sws_ctx);
-        g_ctx.sws_ctx = NULL;
-    }
-    g_ctx.last_width = 0;
-    g_ctx.last_height = 0;
-    return 0;
-}
-
-CHIAKI_EXPORT void VideoSetCallback(FrameCallback callback, void *userdata)
-{
-    g_ctx.callback = callback;
-    g_ctx.userdata = userdata;
-}
-
-CHIAKI_EXPORT void VideoCallbackFree()
-{
-    VideoCallbackInit(); // 重用初始化逻辑清理资源
-}
-
-// 全局变量保存当前待释放的帧（仅支持单帧活跃）
-static AVFrame *g_current_rgb_frame = NULL;
+static AVFrame *current_frame = NULL;
+static AVFrame *rgb_frame = NULL;
 
 // 释放当前帧的导出函数
 CHIAKI_EXPORT void ReleaseCurrentFrame()
 {
-    if (g_current_rgb_frame)
+    if (current_frame)
     {
-        av_frame_free(&g_current_rgb_frame);
-        g_current_rgb_frame = NULL;
+        av_frame_unref(current_frame); // 释放引用计数
+        av_frame_free(&current_frame);
+        current_frame = NULL;
+    }
+    if (rgb_frame)
+    {
+        av_frame_unref(rgb_frame); // 释放引用计数
+        av_frame_free(&rgb_frame); // 释放临时帧
+        rgb_frame = NULL;
     }
 }
 
-CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame, enum AVPixelFormat pixformat)
+CHIAKI_EXPORT RGBFrameInfo pullRgbFrame()
 {
-    if (!g_ctx.callback || !frame)
-        return;
-
-    // 每次临时创建 SwsContext，避免全局缓存
+    chiaki_mutex_lock(&frame_mutex);
+    RGBFrameInfo g_current_rgb_frame = {0};
+    if (!current_frame)
+        return g_current_rgb_frame;
+    enum AVPixelFormat pixformat = chiaki_ffmpeg_decoder_get_pixel_format(ffmpeg_decoder);
     struct SwsContext *sws_ctx = sws_getContext(
-        frame->width, frame->height, pixformat,
-        frame->width, frame->height, AV_PIX_FMT_BGR24,
+        current_frame->width, current_frame->height, pixformat,
+        current_frame->width, current_frame->height, AV_PIX_FMT_BGR24,
         SWS_BILINEAR, NULL, NULL, NULL);
+
     if (!sws_ctx)
     {
-        return;
+        return g_current_rgb_frame;
     }
 
-    AVFrame *rgb_frame = av_frame_alloc();
+    rgb_frame = av_frame_alloc();
     if (!rgb_frame)
     {
         sws_freeContext(sws_ctx);
-        return;
+        return g_current_rgb_frame;
     }
 
     rgb_frame->format = AV_PIX_FMT_BGR24;
@@ -687,28 +657,20 @@ CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame, enum AVPixelFormat pixforma
     {
         av_frame_free(&rgb_frame);
         sws_freeContext(sws_ctx);
-        return;
+        return g_current_rgb_frame;
     }
 
     sws_scale(sws_ctx,
-              frame->data, frame->linesize, 0, frame->height,
+              current_frame->data, current_frame->linesize, 0, current_frame->height,
               rgb_frame->data, rgb_frame->linesize);
-    // 保存当前帧
-    // g_current_rgb_frame = rgb_frame;
-    if (g_ctx.callback)
-    {
-        g_ctx.callback(
-            rgb_frame->data[0],
-            rgb_frame->width,
-            rgb_frame->height,
-            rgb_frame->linesize[0],
-            g_ctx.userdata,
-            (void *)ReleaseCurrentFrame // 直接传递释放函数指针
-        );
-    }
-    av_frame_unref(rgb_frame); // 释放引用计数
-    av_frame_free(&rgb_frame); // 释放临时帧
+
+    g_current_rgb_frame.data = rgb_frame->data[0];
+    g_current_rgb_frame.width = rgb_frame->width;
+    g_current_rgb_frame.height = rgb_frame->height;
+    g_current_rgb_frame.linesize = rgb_frame->linesize[0];
+    chiaki_mutex_unlock(&frame_mutex);
     sws_freeContext(sws_ctx);
+    return g_current_rgb_frame;
 }
 
 static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
@@ -722,59 +684,60 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
     }
     int32_t frames_lost;
     AVFrame *frame = chiaki_ffmpeg_decoder_pull_frame(decoder, &frames_lost);
-    CHIAKI_LOGI(sess->log, "============================回到被执行了，丢失的帧 %d=======================", frames_lost);
 
-//     if (!frame)
-//         return;
+    if (!frame)
+        return;
 
-//     // 手动定义支持零拷贝的格式数组
-//     static const int zero_copy_formats[] = {
-//         AV_PIX_FMT_VULKAN,
-// #ifdef __linux__
-//         AV_PIX_FMT_VAAPI,
-// #endif
-//         -1 // 数组结束标志
-//     };
+    // 手动定义支持零拷贝的格式数组
+    static const int zero_copy_formats[] = {
+        AV_PIX_FMT_VULKAN,
+#ifdef __linux__
+        AV_PIX_FMT_VAAPI,
+#endif
+        -1 // 数组结束标志
+    };
 
-//     int i;
-//     int zero_copy_supported = 0;
-//     for (i = 0; zero_copy_formats[i] != -1; i++)
-//     {
-//         if (zero_copy_formats[i] == frame->format)
-//         {
-//             zero_copy_supported = 1;
-//             break;
-//         }
-//     }
+    int i;
+    int zero_copy_supported = 0;
+    for (i = 0; zero_copy_formats[i] != -1; i++)
+    {
+        if (zero_copy_formats[i] == frame->format)
+        {
+            zero_copy_supported = 1;
+            break;
+        }
+    }
 
-//     if (frame->hw_frames_ctx && (!zero_copy_supported))
-//     {
-//         AVFrame *sw_frame = av_frame_alloc();
-//         if (av_hwframe_transfer_data(sw_frame, frame, 0) < 0)
-//         {
-//             CHIAKI_LOGE(sess->log, "Failed to transfer frame from hardware\n");
-//             av_frame_unref(frame);
-//             av_frame_free(&sw_frame);
-//             return;
-//         }
-//         av_frame_copy_props(sw_frame, frame);
-//         av_frame_unref(frame);
-//         frame = sw_frame;
-//     }
-//     enum AVPixelFormat pixformat = chiaki_ffmpeg_decoder_get_pixel_format(decoder);
-//     VideoProcessFrame(frame, pixformat); 
+    if (frame->hw_frames_ctx && (!zero_copy_supported))
+    {
+        AVFrame *sw_frame = av_frame_alloc();
+        if (av_hwframe_transfer_data(sw_frame, frame, 0) < 0)
+        {
+            CHIAKI_LOGE(sess->log, "Failed to transfer frame from hardware\n");
+            av_frame_unref(frame);
+            av_frame_free(&sw_frame);
+            return;
+        }
+        av_frame_copy_props(sw_frame, frame);
+        av_frame_unref(frame);
+        frame = sw_frame;
+    }
 
-    // 释放 frame
-    av_frame_free(&frame);
+    // enum AVPixelFormat pixformat = chiaki_ffmpeg_decoder_get_pixel_format(decoder);
+    // VideoProcessFrame(frame, pixformat);
+    chiaki_mutex_lock(&frame_mutex);
+    current_frame = frame;
+    chiaki_mutex_unlock(&frame_mutex);
+    // av_frame_free(&frame);
 }
 
-
-CHIAKI_EXPORT void goto_bed(){
+CHIAKI_EXPORT void goto_bed()
+{
     chiaki_session_goto_bed(&session);
 }
 
-
-CHIAKI_EXPORT void sendButton(uint32_t buttonMask, unsigned int sleepTimeMs) {
+CHIAKI_EXPORT void sendButton(uint32_t buttonMask, unsigned int sleepTimeMs)
+{
     ChiakiControllerState state;
     // 1. 清空所有输入
     chiaki_controller_state_set_idle(&state);
@@ -783,14 +746,13 @@ CHIAKI_EXPORT void sendButton(uint32_t buttonMask, unsigned int sleepTimeMs) {
     state.buttons = buttonMask;
     chiaki_session_set_controller_state(session, &state);
 
-    #ifdef _WIN32
+#ifdef _WIN32
     Sleep(sleepTimeMs); // Windows 下使用 Sleep 函数暂停指定毫秒数
-    #else
+#else
     usleep(sleepTimeMs * 1000); // Linux 下使用 usleep 函数暂停指定毫秒数，注意 usleep 参数单位是微秒
-    #endif
+#endif
 
     // 松开
     chiaki_controller_state_set_idle(&state);
     chiaki_session_set_controller_state(session, &state);
-}    
-
+}
