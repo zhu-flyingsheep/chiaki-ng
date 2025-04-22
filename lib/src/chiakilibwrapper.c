@@ -725,7 +725,7 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
     // enum AVPixelFormat pixformat = chiaki_ffmpeg_decoder_get_pixel_format(decoder);
     // VideoProcessFrame(frame, pixformat);
     chiaki_mutex_lock(&frame_mutex);
-    current_frame = frame;
+    // current_frame = frame;
     av_frame_free(&frame);
     chiaki_mutex_unlock(&frame_mutex);
 
