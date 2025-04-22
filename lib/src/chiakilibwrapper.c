@@ -605,8 +605,6 @@ static void HapticsFrameCb(uint8_t *buf, size_t buf_size, void *user)
 {
 }
 
-
-
 // 释放当前帧的导出函数
 CHIAKI_EXPORT void ReleaseCurrentFrame()
 {
@@ -725,10 +723,15 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
     // enum AVPixelFormat pixformat = chiaki_ffmpeg_decoder_get_pixel_format(decoder);
     // VideoProcessFrame(frame, pixformat);
     chiaki_mutex_lock(&frame_mutex);
-    // current_frame = frame;
+    // 1. 释放旧帧（如果存在）
+    if (current_frame != NULL)
+    {
+        av_frame_free(&current_frame); // 释放旧内存
+    }
+    // 2. 复制新帧数据（使用FFmpeg的帧复制接口）
+    current_frame = av_frame_clone(frame); // 复制帧内容（需确保frame有效）
     av_frame_free(&frame);
     chiaki_mutex_unlock(&frame_mutex);
-
 }
 
 CHIAKI_EXPORT void goto_bed()
