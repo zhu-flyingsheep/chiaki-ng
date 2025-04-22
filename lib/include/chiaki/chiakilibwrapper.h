@@ -40,8 +40,8 @@ extern "C"
     static ChiakiFfmpegDecoder *ffmpeg_decoder;
     static ChiakiSession *session;
     static ChiakiMutex frame_mutex;
-    static AVFrame *current_frame ;
-    static AVFrame *rgb_frame ;
+    static AVFrame *current_frame;
+    static AVFrame *rgb_frame;
     CHIAKI_EXPORT ChiakiErrorCode start_session(const char *host,
                                                 const char *string_rp_key,
                                                 const char *rp_regist_key,
@@ -51,7 +51,8 @@ extern "C"
     CHIAKI_EXPORT void goto_bed();
 
     CHIAKI_EXPORT void sendControllButton(uint32_t buttonMask, unsigned int sleepTimeMs);
-    CHIAKI_EXPORT void sendControllAnlogButton(uint32_t buttonMask, unsigned int sleepTimeMs,uint8_t strength);
+    CHIAKI_EXPORT void sendControllAnlogButton(uint32_t buttonMask, unsigned int sleepTimeMs, uint8_t strength);
+    CHIAKI_EXPORT void sendLeftStickDirection(float angle_rad,int16_t strength,int duration_ms);
 
 #ifdef __cplusplus
 }

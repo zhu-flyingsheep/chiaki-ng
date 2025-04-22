@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <ctype.h>
-
+#include <math.h>
 #ifdef _WIN32
 #include <winsock2.h>
 #include <iphlpapi.h>
@@ -760,16 +760,15 @@ CHIAKI_EXPORT void sendControllButton(uint32_t buttonMask, unsigned int sleepTim
     chiaki_session_set_controller_state(session, &state);
 }
 
-
-CHIAKI_EXPORT void sendControllAnlogButton(uint32_t buttonMask, unsigned int sleepTimeMs,uint8_t strength)
+CHIAKI_EXPORT void sendControllAnlogButton(uint32_t buttonMask, unsigned int sleepTimeMs, uint8_t strength)
 {
     ChiakiControllerState state;
     // 1. 清空所有输入
     chiaki_controller_state_set_idle(&state);
 
-     // 2. 标记模拟按钮并设置力度
-     state.buttons |= buttonMask;
-     state.l2_state = strength;
+    // 2. 标记模拟按钮并设置力度
+    state.buttons |= buttonMask;
+    state.l2_state = strength;
     chiaki_session_set_controller_state(session, &state);
 
 #ifdef _WIN32
@@ -779,6 +778,33 @@ CHIAKI_EXPORT void sendControllAnlogButton(uint32_t buttonMask, unsigned int sle
 #endif
 
     // 松开
+    chiaki_controller_state_set_idle(&state);
+    chiaki_session_set_controller_state(session, &state);
+}
+
+CHIAKI_EXPORT void sendLeftStickDirection(float angle_rad, int16_t strength, int duration_ms)
+{
+
+    ChiakiControllerState state;
+
+    /* 1) 初始化：置空所有按钮和摇杆 */
+    chiaki_controller_state_set_idle(&state);
+
+    /* 2) 计算左右分量：cosf/sinf 返回 [-1,1]，乘以 strength 得到 [-strength, +strength] :contentReference[oaicite:2]{index=2} */
+    state.left_x = (int16_t)(cosf(angle_rad) * strength);
+    state.left_y = (int16_t)(sinf(angle_rad) * strength);
+
+    /* 3) 发送“按下”状态 */
+    chiaki_session_set_controller_state(session, &state);
+
+/* 4) 等待指定时长 */
+#ifdef _WIN32
+    Sleep(sleepTimeMs); // Windows 下使用 Sleep 函数暂停指定毫秒数
+#else
+    usleep(sleepTimeMs * 1000); // Linux 下使用 usleep 函数暂停指定毫秒数，注意 usleep 参数单位是微秒
+#endif
+
+    /* 5) 重置为 “松开” 并再次发送 */
     chiaki_controller_state_set_idle(&state);
     chiaki_session_set_controller_state(session, &state);
 }
