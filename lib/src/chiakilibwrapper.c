@@ -726,8 +726,9 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
     // VideoProcessFrame(frame, pixformat);
     chiaki_mutex_lock(&frame_mutex);
     current_frame = frame;
+    av_frame_free(&frame);
     chiaki_mutex_unlock(&frame_mutex);
-    // av_frame_free(&frame);
+
 }
 
 CHIAKI_EXPORT void goto_bed()
