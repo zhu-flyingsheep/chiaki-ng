@@ -40,7 +40,8 @@ extern "C"
     static ChiakiFfmpegDecoder *ffmpeg_decoder;
     static ChiakiSession *session;
     static ChiakiMutex frame_mutex;
-
+    static AVFrame *current_frame ;
+    static AVFrame *rgb_frame ;
     CHIAKI_EXPORT ChiakiErrorCode start_session(const char *host,
                                                 const char *string_rp_key,
                                                 const char *rp_regist_key,

@@ -500,7 +500,7 @@ CHIAKI_EXPORT ChiakiErrorCode start_session(const char *host,
                                             ChiakiTarget target,
                                             ChiakiLog *log)
 {
-    chiaki_mutex_init(&frame_mutex, false)
+    chiaki_mutex_init(&frame_mutex, false);
     uint8_t morning[16];
     uint8_t regist_key[16];
     // 十六进制字符串转 uint8_t 数组
@@ -605,8 +605,7 @@ static void HapticsFrameCb(uint8_t *buf, size_t buf_size, void *user)
 {
 }
 
-static AVFrame *current_frame = NULL;
-static AVFrame *rgb_frame = NULL;
+
 
 // 释放当前帧的导出函数
 CHIAKI_EXPORT void ReleaseCurrentFrame()
