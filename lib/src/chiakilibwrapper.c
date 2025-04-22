@@ -500,7 +500,6 @@ CHIAKI_EXPORT ChiakiErrorCode start_session(const char *host,
                                             ChiakiTarget target,
                                             ChiakiLog *log)
 {
-    chiaki_mutex_init(&frame_mutex, false);
     uint8_t morning[16];
     uint8_t regist_key[16];
     // 十六进制字符串转 uint8_t 数组
@@ -537,6 +536,7 @@ CHIAKI_EXPORT ChiakiErrorCode start_session(const char *host,
         chiaki_session_fini(session);
         return err;
     }
+    chiaki_mutex_init(&frame_mutex, false);
 
     ffmpeg_decoder = (ChiakiFfmpegDecoder *)malloc(sizeof(ChiakiFfmpegDecoder));
     if (ffmpeg_decoder == NULL)
@@ -649,8 +649,8 @@ CHIAKI_EXPORT RGBFrameInfo pullRgbFrame()
     }
 
     rgb_frame->format = AV_PIX_FMT_BGR24;
-    rgb_frame->width = frame->width;
-    rgb_frame->height = frame->height;
+    rgb_frame->width = current_frame->width;
+    rgb_frame->height = current_frame->height;
 
     if (av_frame_get_buffer(rgb_frame, 0) < 0)
     {
