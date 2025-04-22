@@ -521,7 +521,7 @@ CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
     memcpy(connect_info.regist_key, regist_key, sizeof(regist_key));
     memcpy(connect_info.morning, morning, sizeof(morning));
 
-    ChiakiSession *session = (ChiakiSession *)malloc(sizeof(ChiakiSession));
+    session = (ChiakiSession *)malloc(sizeof(ChiakiSession));
     if (session == NULL)
     {
         CHIAKI_LOGE(log, "Session malloc failed");
@@ -725,3 +725,9 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
     // 释放 frame
     av_frame_free(&frame);
 }
+
+
+CHIAKI_EXPORT void goto_bed(){
+    chiaki_session_goto_bed(&session);
+}
+

@@ -35,7 +35,7 @@ extern "C"
     CHIAKI_EXPORT void ReleaseCurrentFrame(); // 释放当前帧的导出函数
     // 帧处理入口函数 (需在获取AVFrame后调用)
     // param frame: 从FFmpeg获取的AVFrame指针
-    CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame,enum AVPixelFormat  pixformat);
+    CHIAKI_EXPORT void VideoProcessFrame(AVFrame *frame, enum AVPixelFormat pixformat);
 
     CHIAKI_EXPORT ChiakiErrorCode discovery_ps(ChiakiDiscoveryServiceCb cb, ChiakiLog *log);
 
@@ -55,11 +55,14 @@ extern "C"
     static void *g_userdata = NULL;
     static struct SwsContext *g_sws_ctx = NULL;
     static ChiakiFfmpegDecoder *ffmpeg_decoder;
+    static ChiakiSession *session;
     CHIAKI_EXPORT ChiakiErrorCode pull_frame(const char *host,
                                              const char *string_rp_key,
                                              const char *rp_regist_key,
                                              ChiakiTarget target,
                                              ChiakiLog *log);
+
+    CHIAKI_EXPORT void goto_bed();
 
 #ifdef __cplusplus
 }
