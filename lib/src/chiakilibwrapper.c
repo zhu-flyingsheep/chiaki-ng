@@ -720,48 +720,48 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
     }
     int32_t frames_lost;
     AVFrame *frame = chiaki_ffmpeg_decoder_pull_frame(decoder, &frames_lost);
-    CHIAKI_LOGI(sess->log, "frames_lost: %d", frames_lost);
+    CHIAKI_LOGI(sess->log, "============frames_lost: %d", frames_lost);
 
-    if (!frame)
-        return;
+//     if (!frame)
+//         return;
 
-    // 手动定义支持零拷贝的格式数组
-    static const int zero_copy_formats[] = {
-        AV_PIX_FMT_VULKAN,
-#ifdef __linux__
-        AV_PIX_FMT_VAAPI,
-#endif
-        -1 // 数组结束标志
-    };
+//     // 手动定义支持零拷贝的格式数组
+//     static const int zero_copy_formats[] = {
+//         AV_PIX_FMT_VULKAN,
+// #ifdef __linux__
+//         AV_PIX_FMT_VAAPI,
+// #endif
+//         -1 // 数组结束标志
+//     };
 
-    int i;
-    int zero_copy_supported = 0;
-    for (i = 0; zero_copy_formats[i] != -1; i++)
-    {
-        if (zero_copy_formats[i] == frame->format)
-        {
-            zero_copy_supported = 1;
-            break;
-        }
-    }
+//     int i;
+//     int zero_copy_supported = 0;
+//     for (i = 0; zero_copy_formats[i] != -1; i++)
+//     {
+//         if (zero_copy_formats[i] == frame->format)
+//         {
+//             zero_copy_supported = 1;
+//             break;
+//         }
+//     }
 
-    if (frame->hw_frames_ctx && (!zero_copy_supported))
-    {
-        AVFrame *sw_frame = av_frame_alloc();
-        if (av_hwframe_transfer_data(sw_frame, frame, 0) < 0)
-        {
-            CHIAKI_LOGE(sess->log, "Failed to transfer frame from hardware\n");
-            av_frame_unref(frame);
-            av_frame_free(&sw_frame);
-            return;
-        }
-        av_frame_copy_props(sw_frame, frame);
-        av_frame_unref(frame);
-        frame = sw_frame;
-    }
-    enum AVPixelFormat pixformat = chiaki_ffmpeg_decoder_get_pixel_format(decoder);
-    // 在这里可以添加处理 frame 的代码
-    VideoProcessFrame(frame, pixformat); // 只需添加这一行
+//     if (frame->hw_frames_ctx && (!zero_copy_supported))
+//     {
+//         AVFrame *sw_frame = av_frame_alloc();
+//         if (av_hwframe_transfer_data(sw_frame, frame, 0) < 0)
+//         {
+//             CHIAKI_LOGE(sess->log, "Failed to transfer frame from hardware\n");
+//             av_frame_unref(frame);
+//             av_frame_free(&sw_frame);
+//             return;
+//         }
+//         av_frame_copy_props(sw_frame, frame);
+//         av_frame_unref(frame);
+//         frame = sw_frame;
+//     }
+//     enum AVPixelFormat pixformat = chiaki_ffmpeg_decoder_get_pixel_format(decoder);
+//     VideoProcessFrame(frame, pixformat); 
+
     // 释放 frame
     av_frame_free(&frame);
 }
