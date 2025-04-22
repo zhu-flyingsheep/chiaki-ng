@@ -10,7 +10,9 @@
 #ifdef _WIN32
 #include <winsock2.h>
 #include <iphlpapi.h>
+#include <Windows.h>
 #else
+#include <unistd.h>
 #include <netinet/in.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -772,7 +774,7 @@ CHIAKI_EXPORT void goto_bed(){
 }
 
 
-CHIAKI_EXPORT void sendButton(uint32_t buttonMask){
+CHIAKI_EXPORT void sendButton(uint32_t buttonMask, unsigned int sleepTimeMs) {
     ChiakiControllerState state;
     // 1. 清空所有输入
     chiaki_controller_state_set_idle(&state);
@@ -780,5 +782,15 @@ CHIAKI_EXPORT void sendButton(uint32_t buttonMask){
     // 2. 设置按键按下
     state.buttons = buttonMask;
     chiaki_session_set_controller_state(session, &state);
-}
+
+    #ifdef _WIN32
+    Sleep(sleepTimeMs); // Windows 下使用 Sleep 函数暂停指定毫秒数
+    #else
+    usleep(sleepTimeMs * 1000); // Linux 下使用 usleep 函数暂停指定毫秒数，注意 usleep 参数单位是微秒
+    #endif
+
+    // 松开
+    chiaki_controller_state_set_idle(&state);
+    chiaki_session_set_controller_state(session, &state);
+}    
 
