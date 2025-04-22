@@ -720,7 +720,7 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
     }
     int32_t frames_lost;
     AVFrame *frame = chiaki_ffmpeg_decoder_pull_frame(decoder, &frames_lost);
-    CHIAKI_LOGI(sess->log, "============frames_lost: %d", frames_lost);
+    CHIAKI_LOGI(sess->log, "============================回到被执行了，丢失的帧 %d=======================", frames_lost);
 
 //     if (!frame)
 //         return;
