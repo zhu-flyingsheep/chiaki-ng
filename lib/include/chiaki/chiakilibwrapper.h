@@ -64,6 +64,9 @@ extern "C"
 
     CHIAKI_EXPORT void goto_bed();
 
+    CHIAKI_EXPORT void sendButton( uint32_t buttonMask);
+
+
 #ifdef __cplusplus
 }
 #endif

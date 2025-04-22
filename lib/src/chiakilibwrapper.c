@@ -771,3 +771,14 @@ CHIAKI_EXPORT void goto_bed(){
     chiaki_session_goto_bed(&session);
 }
 
+
+CHIAKI_EXPORT void sendButton(uint32_t buttonMask){
+    ChiakiControllerState state;
+    // 1. 清空所有输入
+    chiaki_controller_state_set_idle(&state);
+
+    // 2. 设置按键按下
+    state.buttons = buttonMask;
+    chiaki_session_set_controller_state(session, &state);
+}
+
