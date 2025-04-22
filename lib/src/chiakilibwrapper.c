@@ -782,7 +782,7 @@ CHIAKI_EXPORT void sendControllAnlogButton(uint32_t buttonMask, unsigned int sle
     chiaki_session_set_controller_state(session, &state);
 }
 
-CHIAKI_EXPORT void sendLeftStickDirection(float angle_rad, int16_t strength, int duration_ms)
+CHIAKI_EXPORT void sendLeftStickDirection(float angle_rad,int sleepTimeMs,int16_t strength)
 {
 
     ChiakiControllerState state;
