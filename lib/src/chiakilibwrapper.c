@@ -724,12 +724,12 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
     // VideoProcessFrame(frame, pixformat);
     chiaki_mutex_lock(&frame_mutex);
     // 1. 释放旧帧（如果存在）
-    // if (current_frame != NULL)
-    // {
-    //     av_frame_free(&current_frame); // 释放旧内存
-    // }
+    if (current_frame != NULL)
+    {
+        av_frame_free(&current_frame); // 释放旧内存
+    }
     // 2. 复制新帧数据（使用FFmpeg的帧复制接口）
-    // current_frame = av_frame_clone(frame); // 复制帧内容（需确保frame有效）
+    current_frame = av_frame_clone(frame); // 复制帧内容（需确保frame有效）
     av_frame_free(&frame);
     chiaki_mutex_unlock(&frame_mutex);
 }
