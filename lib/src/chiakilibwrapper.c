@@ -609,11 +609,6 @@ static void HapticsFrameCb(uint8_t *buf, size_t buf_size, void *user)
 CHIAKI_EXPORT void ReleaseCurrentFrame()
 {
     chiaki_mutex_lock(&frame_mutex); // 加锁
-    if (current_frame)
-    {
-        av_frame_free(&current_frame);
-        current_frame = NULL;
-    }
     if (rgb_frame)
     {
         av_frame_free(&rgb_frame); // 释放临时帧
@@ -622,12 +617,13 @@ CHIAKI_EXPORT void ReleaseCurrentFrame()
     chiaki_mutex_unlock(&frame_mutex); // 解锁
 }
 
-CHIAKI_EXPORT RGBFrameInfo pullRgbFrame()
+CHIAKI_EXPORT RGBFrameInfo pullRgbFrame(ChiakiLog *log)
 {
     chiaki_mutex_lock(&frame_mutex);
     RGBFrameInfo g_current_rgb_frame = {0};
-    if (!current_frame)
+    if (!current_frame){
         return g_current_rgb_frame;
+    }
     enum AVPixelFormat pixformat = chiaki_ffmpeg_decoder_get_pixel_format(ffmpeg_decoder);
     struct SwsContext *sws_ctx = sws_getContext(
         current_frame->width, current_frame->height, pixformat,
@@ -636,6 +632,7 @@ CHIAKI_EXPORT RGBFrameInfo pullRgbFrame()
 
     if (!sws_ctx)
     {
+        CHIAKI_LOGE(log, "Failed to create sws context\n");
         return g_current_rgb_frame;
     }
 
@@ -643,6 +640,7 @@ CHIAKI_EXPORT RGBFrameInfo pullRgbFrame()
     if (!rgb_frame)
     {
         sws_freeContext(sws_ctx);
+        CHIAKI_LOGE(log, "Failed to allocate rgb_frame\n");
         return g_current_rgb_frame;
     }
 
@@ -654,6 +652,7 @@ CHIAKI_EXPORT RGBFrameInfo pullRgbFrame()
     {
         av_frame_free(&rgb_frame);
         sws_freeContext(sws_ctx);
+        CHIAKI_LOGE(log, "Failed to allocate buffer for rgb_frame\n");
         return g_current_rgb_frame;
     }
 
@@ -667,6 +666,7 @@ CHIAKI_EXPORT RGBFrameInfo pullRgbFrame()
     g_current_rgb_frame.linesize = rgb_frame->linesize[0];
     chiaki_mutex_unlock(&frame_mutex);
     sws_freeContext(sws_ctx);
+    CHIAKI_LOGI(log, "get frame success!\n");
     return g_current_rgb_frame;
 }
 
@@ -725,6 +725,9 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
     // 1. 保存旧帧指针，用于后续释放
     AVFrame *old_frame = current_frame;
 
+    if (current_frame){
+        av_frame_free(&current_frame);  // 覆盖旧帧
+    }
     // 2. 克隆新帧并检查是否成功
     current_frame = av_frame_clone(frame);
     if (!current_frame)
