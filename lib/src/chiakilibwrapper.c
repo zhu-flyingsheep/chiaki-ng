@@ -720,17 +720,27 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
         frame = sw_frame;
     }
 
-    // enum AVPixelFormat pixformat = chiaki_ffmpeg_decoder_get_pixel_format(decoder);
-    // VideoProcessFrame(frame, pixformat);
     chiaki_mutex_lock(&frame_mutex);
-    // 1. 释放旧帧（如果存在）
-    if (current_frame != NULL)
+
+    // 1. 保存旧帧指针，用于后续释放
+    AVFrame *old_frame = current_frame;
+
+    // 2. 克隆新帧并检查是否成功
+    current_frame = av_frame_clone(frame);
+    if (!current_frame)
     {
-        av_frame_free(&current_frame); // 释放旧内存
+        CHIAKI_LOGE(sess->log, "Failed to clone frame, keeping previous frame");
+        // 克隆失败时保留旧帧，避免 current_frame 变为 NULL
+        current_frame = old_frame;
+        old_frame = NULL; // 避免重复释放
     }
-    // 2. 复制新帧数据（使用FFmpeg的帧复制接口）
-    current_frame = av_frame_clone(frame); // 复制帧内容（需确保frame有效）
-    av_frame_free(&frame);
+
+    // 3. 安全释放旧帧和当前帧
+    if (old_frame)
+        av_frame_free(&old_frame);
+    if (frame)
+        av_frame_free(&frame); // 释放原始帧
+
     chiaki_mutex_unlock(&frame_mutex);
 }
 
