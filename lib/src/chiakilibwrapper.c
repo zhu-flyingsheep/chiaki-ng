@@ -608,18 +608,18 @@ static void HapticsFrameCb(uint8_t *buf, size_t buf_size, void *user)
 // 释放当前帧的导出函数
 CHIAKI_EXPORT void ReleaseCurrentFrame()
 {
+    chiaki_mutex_lock(&frame_mutex); // 加锁
     if (current_frame)
     {
-        av_frame_unref(current_frame); // 释放引用计数
         av_frame_free(&current_frame);
         current_frame = NULL;
     }
     if (rgb_frame)
     {
-        av_frame_unref(rgb_frame); // 释放引用计数
         av_frame_free(&rgb_frame); // 释放临时帧
         rgb_frame = NULL;
     }
+    chiaki_mutex_unlock(&frame_mutex); // 解锁
 }
 
 CHIAKI_EXPORT RGBFrameInfo pullRgbFrame()
