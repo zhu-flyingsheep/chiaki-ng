@@ -617,7 +617,7 @@ CHIAKI_EXPORT void ReleaseCurrentFrame()
     chiaki_mutex_unlock(&frame_mutex); // 解锁
 }
 
-CHIAKI_EXPORT RGBFrameInfo pullRgbFrame(ChiakiLog *log)
+CHIAKI_EXPORT RGBFrameInfo pullRgbFrame()
 {
     chiaki_mutex_lock(&frame_mutex);
     RGBFrameInfo g_current_rgb_frame = {0};
@@ -632,7 +632,7 @@ CHIAKI_EXPORT RGBFrameInfo pullRgbFrame(ChiakiLog *log)
 
     if (!sws_ctx)
     {
-        CHIAKI_LOGE(log, "Failed to create sws context\n");
+        // CHIAKI_LOGE(log, "Failed to create sws context\n");
         return g_current_rgb_frame;
     }
 
@@ -640,7 +640,7 @@ CHIAKI_EXPORT RGBFrameInfo pullRgbFrame(ChiakiLog *log)
     if (!rgb_frame)
     {
         sws_freeContext(sws_ctx);
-        CHIAKI_LOGE(log, "Failed to allocate rgb_frame\n");
+        // CHIAKI_LOGE(log, "Failed to allocate rgb_frame\n");
         return g_current_rgb_frame;
     }
 
@@ -652,7 +652,7 @@ CHIAKI_EXPORT RGBFrameInfo pullRgbFrame(ChiakiLog *log)
     {
         av_frame_free(&rgb_frame);
         sws_freeContext(sws_ctx);
-        CHIAKI_LOGE(log, "Failed to allocate buffer for rgb_frame\n");
+        // CHIAKI_LOGE(log, "Failed to allocate buffer for rgb_frame\n");
         return g_current_rgb_frame;
     }
 
@@ -666,7 +666,7 @@ CHIAKI_EXPORT RGBFrameInfo pullRgbFrame(ChiakiLog *log)
     g_current_rgb_frame.linesize = rgb_frame->linesize[0];
     chiaki_mutex_unlock(&frame_mutex);
     sws_freeContext(sws_ctx);
-    CHIAKI_LOGI(log, "get frame success!\n");
+    // CHIAKI_LOGI(log, "get frame success!\n");
     return g_current_rgb_frame;
 }
 
