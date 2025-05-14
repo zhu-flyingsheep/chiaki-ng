@@ -700,6 +700,26 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user)
     if (back_buffer.rgb_frame)
         av_frame_free(&back_buffer.rgb_frame);
 
+    // 手动定义支持零拷贝的格式数组
+    static const int zero_copy_formats[] = {
+        AV_PIX_FMT_VULKAN,
+#ifdef __linux__
+        AV_PIX_FMT_VAAPI,
+#endif
+        -1 // 数组结束标志
+    };
+
+    int i;
+    int zero_copy_supported = 0;
+    for (i = 0; zero_copy_formats[i] != -1; i++)
+    {
+        if (zero_copy_formats[i] == frame->format)
+        {
+            zero_copy_supported = 1;
+            break;
+        }
+    }
+
     if (frame->hw_frames_ctx && (!zero_copy_supported))
     {
         AVFrame *sw_frame = av_frame_alloc();
