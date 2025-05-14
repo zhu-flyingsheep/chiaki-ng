@@ -686,7 +686,8 @@ CHIAKI_EXPORT RGBFrameInfo pullRgbFrame()
 static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user)
 {
     ChiakiSession *sess = (ChiakiSession *)user;
-    AVFrame *frame = chiaki_ffmpeg_decoder_pull_frame(decoder, NULL);
+    int32_t frames_lost;
+    AVFrame *frame = chiaki_ffmpeg_decoder_pull_frame(decoder, &frames_lost);
     if (!frame)
         return;
 
