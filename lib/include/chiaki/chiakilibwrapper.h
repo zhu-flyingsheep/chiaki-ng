@@ -21,6 +21,18 @@ extern "C"
         int linesize;
     } RGBFrameInfo;
 
+    // 新增结构体管理帧缓冲
+    typedef struct FrameBuffer
+    {
+        AVFrame *frame;
+        struct SwsContext *sws_ctx;
+        AVFrame *rgb_frame;
+        ChiakiMutex mutex;
+    } FrameBuffer;
+    static FrameBuffer front_buffer;  // 前台缓冲（用于显示）
+    static FrameBuffer back_buffer;   // 后台缓冲（用于解码）
+    static atomic_bool buffer_swapped = false;
+
     CHIAKI_EXPORT void ReleaseCurrentFrame(); // 释放当前帧的导出函数
 
     CHIAKI_EXPORT RGBFrameInfo pullRgbFrame();
@@ -39,9 +51,10 @@ extern "C"
                                           void *cb_user);
     static ChiakiFfmpegDecoder *ffmpeg_decoder;
     static ChiakiSession *session;
-    static ChiakiMutex frame_mutex;
-    static AVFrame *current_frame;
-    static AVFrame *rgb_frame;
+
+
+
+
     CHIAKI_EXPORT ChiakiErrorCode start_session(const char *host,
                                                 const char *string_rp_key,
                                                 const char *rp_regist_key,
@@ -52,7 +65,7 @@ extern "C"
 
     CHIAKI_EXPORT void sendControllButton(uint32_t buttonMask, unsigned int sleepTimeMs);
     CHIAKI_EXPORT void sendControllAnlogButton(uint32_t buttonMask, unsigned int sleepTimeMs, uint8_t strength);
-    CHIAKI_EXPORT void sendLeftStickDirection(float angle_rad,int sleepTimeMs,int16_t strength);
+    CHIAKI_EXPORT void sendLeftStickDirection(float angle_rad, int sleepTimeMs, int16_t strength);
 
 #ifdef __cplusplus
 }

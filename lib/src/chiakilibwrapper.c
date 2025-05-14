@@ -536,7 +536,8 @@ CHIAKI_EXPORT ChiakiErrorCode start_session(const char *host,
         chiaki_session_fini(session);
         return err;
     }
-    chiaki_mutex_init(&frame_mutex, false);
+    chiaki_mutex_init(&front_buffer.mutex, false);
+    chiaki_mutex_init(&back_buffer.mutex, false);
 
     ffmpeg_decoder = (ChiakiFfmpegDecoder *)malloc(sizeof(ChiakiFfmpegDecoder));
     if (ffmpeg_decoder == NULL)
@@ -605,133 +606,109 @@ static void HapticsFrameCb(uint8_t *buf, size_t buf_size, void *user)
 {
 }
 
-// 释放当前帧的导出函数
+//--------------------------------------------------
+// 释放资源（C#调用）
+//--------------------------------------------------
 CHIAKI_EXPORT void ReleaseCurrentFrame()
 {
-    if (current_frame)
-    {
-        av_frame_unref(current_frame); // 释放引用计数
-        av_frame_free(&current_frame);
-        current_frame = NULL;
+    // 只需释放后台缓冲（当交换发生时，前台缓冲会被自动清理）
+    chiaki_mutex_lock(&back_buffer.mutex);
+    if(back_buffer.frame) {
+        av_frame_free(&back_buffer.frame);
     }
-    if (rgb_frame)
-    {
-        av_frame_unref(rgb_frame); // 释放引用计数
-        av_frame_free(&rgb_frame); // 释放临时帧
-        rgb_frame = NULL;
+    if(back_buffer.rgb_frame) {
+        av_frame_free(&back_buffer.rgb_frame);
     }
+    chiaki_mutex_unlock(&back_buffer.mutex);
 }
 
+//--------------------------------------------------
+// 获取RGB帧（C#调用）
+//--------------------------------------------------
 CHIAKI_EXPORT RGBFrameInfo pullRgbFrame()
 {
-    chiaki_mutex_lock(&frame_mutex);
-    RGBFrameInfo g_current_rgb_frame = {0};
-    if (!current_frame)
-        return g_current_rgb_frame;
-    enum AVPixelFormat pixformat = chiaki_ffmpeg_decoder_get_pixel_format(ffmpeg_decoder);
-    struct SwsContext *sws_ctx = sws_getContext(
-        current_frame->width, current_frame->height, pixformat,
-        current_frame->width, current_frame->height, AV_PIX_FMT_BGR24,
-        SWS_BILINEAR, NULL, NULL, NULL);
-
-    if (!sws_ctx)
-    {
-        return g_current_rgb_frame;
+    RGBFrameInfo info = {0};
+    
+    // 检查是否需要交换缓冲
+    if(buffer_swapped) {
+        chiaki_mutex_lock(&front_buffer.mutex);
+        chiaki_mutex_lock(&back_buffer.mutex);
+        
+        // 交换前后台缓冲
+        FrameBuffer temp = front_buffer;
+        front_buffer = back_buffer;
+        back_buffer = temp;
+        
+        // 重置交换标志
+        buffer_swapped = false;
+        
+        chiaki_mutex_unlock(&back_buffer.mutex);
+        chiaki_mutex_unlock(&front_buffer.mutex);
     }
 
-    rgb_frame = av_frame_alloc();
-    if (!rgb_frame)
-    {
-        sws_freeContext(sws_ctx);
-        return g_current_rgb_frame;
+    // 读取前台缓冲
+    chiaki_mutex_lock(&front_buffer.mutex);
+    if(front_buffer.rgb_frame) {
+        info.data = front_buffer.rgb_frame->data[0];
+        info.width = front_buffer.rgb_frame->width;
+        info.height = front_buffer.rgb_frame->height;
+        info.linesize = front_buffer.rgb_frame->linesize[0];
     }
-
-    rgb_frame->format = AV_PIX_FMT_BGR24;
-    rgb_frame->width = current_frame->width;
-    rgb_frame->height = current_frame->height;
-
-    if (av_frame_get_buffer(rgb_frame, 0) < 0)
-    {
-        av_frame_free(&rgb_frame);
-        sws_freeContext(sws_ctx);
-        return g_current_rgb_frame;
-    }
-
-    sws_scale(sws_ctx,
-              current_frame->data, current_frame->linesize, 0, current_frame->height,
-              rgb_frame->data, rgb_frame->linesize);
-
-    g_current_rgb_frame.data = rgb_frame->data[0];
-    g_current_rgb_frame.width = rgb_frame->width;
-    g_current_rgb_frame.height = rgb_frame->height;
-    g_current_rgb_frame.linesize = rgb_frame->linesize[0];
-    chiaki_mutex_unlock(&frame_mutex);
-    sws_freeContext(sws_ctx);
-    return g_current_rgb_frame;
+    chiaki_mutex_unlock(&front_buffer.mutex);
+    
+    return info;
 }
 
-static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *session)
+//--------------------------------------------------
+// 解码线程回调
+//--------------------------------------------------
+static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user)
 {
-    ChiakiSession *sess = (ChiakiSession *)session;
+    ChiakiSession *sess = (ChiakiSession *)user;
+    AVFrame *frame = chiaki_ffmpeg_decoder_pull_frame(decoder, NULL);
+    if(!frame) return;
 
-    if (!decoder)
-    {
-        CHIAKI_LOGE(sess->log, "Session has no FFmpeg decoder\n");
-        return;
-    }
-    int32_t frames_lost;
-    AVFrame *frame = chiaki_ffmpeg_decoder_pull_frame(decoder, &frames_lost);
+    // 获取后台缓冲锁
+    chiaki_mutex_lock(&back_buffer.mutex);
 
-    if (!frame)
-        return;
+    // 释放旧后台缓冲内容
+    if(back_buffer.frame)
+        av_frame_free(&back_buffer.frame);
+    if(back_buffer.rgb_frame)
+        av_frame_free(&back_buffer.rgb_frame);
 
-    // 手动定义支持零拷贝的格式数组
-    static const int zero_copy_formats[] = {
-        AV_PIX_FMT_VULKAN,
-#ifdef __linux__
-        AV_PIX_FMT_VAAPI,
-#endif
-        -1 // 数组结束标志
-    };
+    // 克隆新帧到后台缓冲
+    back_buffer.frame = av_frame_clone(frame);
+    av_frame_unref(frame);
 
-    int i;
-    int zero_copy_supported = 0;
-    for (i = 0; zero_copy_formats[i] != -1; i++)
-    {
-        if (zero_copy_formats[i] == frame->format)
-        {
-            zero_copy_supported = 1;
-            break;
-        }
+    // 预初始化转换上下文
+    if(!back_buffer.sws_ctx) {
+        back_buffer.sws_ctx = sws_getContext(
+            back_buffer.frame->width, back_buffer.frame->height,
+            chiaki_ffmpeg_decoder_get_pixel_format(decoder),
+            back_buffer.frame->width, back_buffer.frame->height,
+            AV_PIX_FMT_BGR24,
+            SWS_BILINEAR, NULL, NULL, NULL);
     }
 
-    if (frame->hw_frames_ctx && (!zero_copy_supported))
-    {
-        AVFrame *sw_frame = av_frame_alloc();
-        if (av_hwframe_transfer_data(sw_frame, frame, 0) < 0)
-        {
-            CHIAKI_LOGE(sess->log, "Failed to transfer frame from hardware\n");
-            av_frame_unref(frame);
-            av_frame_free(&sw_frame);
-            return;
-        }
-        av_frame_copy_props(sw_frame, frame);
-        av_frame_unref(frame);
-        frame = sw_frame;
+    // 预分配RGB帧
+    if(!back_buffer.rgb_frame) {
+        back_buffer.rgb_frame = av_frame_alloc();
+        back_buffer.rgb_frame->format = AV_PIX_FMT_BGR24;
+        back_buffer.rgb_frame->width = back_buffer.frame->width;
+        back_buffer.rgb_frame->height = back_buffer.frame->height;
+        av_frame_get_buffer(back_buffer.rgb_frame, 0);
     }
 
-    // enum AVPixelFormat pixformat = chiaki_ffmpeg_decoder_get_pixel_format(decoder);
-    // VideoProcessFrame(frame, pixformat);
-    chiaki_mutex_lock(&frame_mutex);
-    // 1. 释放旧帧（如果存在）
-    if (current_frame != NULL)
-    {
-        av_frame_free(&current_frame); // 释放旧内存
-    }
-    // 2. 复制新帧数据（使用FFmpeg的帧复制接口）
-    current_frame = av_frame_clone(frame); // 复制帧内容（需确保frame有效）
-    av_frame_free(&frame);
-    chiaki_mutex_unlock(&frame_mutex);
+    // 执行格式转换
+    sws_scale(back_buffer.sws_ctx,
+        back_buffer.frame->data, back_buffer.frame->linesize,
+        0, back_buffer.frame->height,
+        back_buffer.rgb_frame->data, back_buffer.rgb_frame->linesize);
+
+    // 标记缓冲已更新
+    buffer_swapped = true;
+    chiaki_mutex_unlock(&back_buffer.mutex);
 }
 
 CHIAKI_EXPORT void goto_bed()
