@@ -700,6 +700,20 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user)
     if (back_buffer.rgb_frame)
         av_frame_free(&back_buffer.rgb_frame);
 
+    if (frame->hw_frames_ctx && (!zero_copy_supported))
+    {
+        AVFrame *sw_frame = av_frame_alloc();
+        if (av_hwframe_transfer_data(sw_frame, frame, 0) < 0)
+        {
+            CHIAKI_LOGE(sess->log, "Failed to transfer frame from hardware\n");
+            av_frame_unref(frame);
+            av_frame_free(&sw_frame);
+            return;
+        }
+        av_frame_copy_props(sw_frame, frame);
+        av_frame_unref(frame);
+        frame = sw_frame;
+    }
     // 克隆新帧到后台缓冲
     back_buffer.frame = av_frame_clone(frame);
     av_frame_unref(frame);
@@ -709,7 +723,7 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user)
     {
         back_buffer.sws_ctx = sws_getContext(
             back_buffer.frame->width, back_buffer.frame->height,
-            chiaki_ffmpeg_decoder_get_pixel_format(decoder),
+            chiaki_ffmpeg_decoder_get_pixel_format(ffmpeg_decoder),
             back_buffer.frame->width, back_buffer.frame->height,
             AV_PIX_FMT_BGR24,
             SWS_BILINEAR, NULL, NULL, NULL);
