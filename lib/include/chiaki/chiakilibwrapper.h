@@ -27,13 +27,13 @@ extern "C"
         AVFrame *frame;
         struct SwsContext *sws_ctx;
         AVFrame *rgb_frame;
-        chiaki_mutex_t mutex;
+        ChiakiMutex mutex;
     } FrameBuffer;
 
     static FrameBuffer front_buffer;
     static FrameBuffer back_buffer;
     static bool buffer_swapped = false;
-    static chiaki_mutex_t swap_mutex;
+    static ChiakiMutex swap_mutex;
 
     CHIAKI_EXPORT void ReleaseCurrentFrame(); // 释放当前帧的导出函数
 
