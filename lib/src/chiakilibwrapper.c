@@ -536,8 +536,11 @@ CHIAKI_EXPORT ChiakiErrorCode start_session(const char *host,
         chiaki_session_fini(session);
         return err;
     }
+    memset(&front_buffer, 0, sizeof(FrameBuffer));
+    memset(&back_buffer, 0, sizeof(FrameBuffer));
     chiaki_mutex_init(&front_buffer.mutex, false);
     chiaki_mutex_init(&back_buffer.mutex, false);
+    chiaki_mutex_init(&swap_mutex, false);
 
     ffmpeg_decoder = (ChiakiFfmpegDecoder *)malloc(sizeof(ChiakiFfmpegDecoder));
     if (ffmpeg_decoder == NULL)
@@ -613,49 +616,67 @@ CHIAKI_EXPORT void ReleaseCurrentFrame()
 {
     // 只需释放后台缓冲（当交换发生时，前台缓冲会被自动清理）
     chiaki_mutex_lock(&back_buffer.mutex);
-    if(back_buffer.frame) {
+    if (back_buffer.frame)
+    {
         av_frame_free(&back_buffer.frame);
     }
-    if(back_buffer.rgb_frame) {
+    if (back_buffer.rgb_frame)
+    {
         av_frame_free(&back_buffer.rgb_frame);
     }
     chiaki_mutex_unlock(&back_buffer.mutex);
 }
 
 //--------------------------------------------------
-// 获取RGB帧（C#调用）
+// 获取RGB帧
 //--------------------------------------------------
 CHIAKI_EXPORT RGBFrameInfo pullRgbFrame()
 {
     RGBFrameInfo info = {0};
-    
-    // 检查是否需要交换缓冲
-    if(buffer_swapped) {
+
+    // 检查交换标志
+    bool need_swap = false;
+    chiaki_mutex_lock(&swap_mutex);
+    if (buffer_swapped)
+    {
+        need_swap = true;
+        buffer_swapped = false;
+    }
+    chiaki_mutex_unlock(&swap_mutex);
+
+    if (need_swap)
+    {
         chiaki_mutex_lock(&front_buffer.mutex);
         chiaki_mutex_lock(&back_buffer.mutex);
-        
-        // 交换前后台缓冲
-        FrameBuffer temp = front_buffer;
-        front_buffer = back_buffer;
-        back_buffer = temp;
-        
-        // 重置交换标志
-        buffer_swapped = false;
-        
+
+        // 交换缓冲区内容
+        AVFrame *temp_frame = front_buffer.frame;
+        struct SwsContext *temp_sws = front_buffer.sws_ctx;
+        AVFrame *temp_rgb = front_buffer.rgb_frame;
+
+        front_buffer.frame = back_buffer.frame;
+        front_buffer.sws_ctx = back_buffer.sws_ctx;
+        front_buffer.rgb_frame = back_buffer.rgb_frame;
+
+        back_buffer.frame = temp_frame;
+        back_buffer.sws_ctx = temp_sws;
+        back_buffer.rgb_frame = temp_rgb;
+
         chiaki_mutex_unlock(&back_buffer.mutex);
         chiaki_mutex_unlock(&front_buffer.mutex);
     }
 
     // 读取前台缓冲
     chiaki_mutex_lock(&front_buffer.mutex);
-    if(front_buffer.rgb_frame) {
+    if (front_buffer.rgb_frame)
+    {
         info.data = front_buffer.rgb_frame->data[0];
         info.width = front_buffer.rgb_frame->width;
         info.height = front_buffer.rgb_frame->height;
         info.linesize = front_buffer.rgb_frame->linesize[0];
     }
     chiaki_mutex_unlock(&front_buffer.mutex);
-    
+
     return info;
 }
 
@@ -666,15 +687,16 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user)
 {
     ChiakiSession *sess = (ChiakiSession *)user;
     AVFrame *frame = chiaki_ffmpeg_decoder_pull_frame(decoder, NULL);
-    if(!frame) return;
+    if (!frame)
+        return;
 
     // 获取后台缓冲锁
     chiaki_mutex_lock(&back_buffer.mutex);
 
     // 释放旧后台缓冲内容
-    if(back_buffer.frame)
+    if (back_buffer.frame)
         av_frame_free(&back_buffer.frame);
-    if(back_buffer.rgb_frame)
+    if (back_buffer.rgb_frame)
         av_frame_free(&back_buffer.rgb_frame);
 
     // 克隆新帧到后台缓冲
@@ -682,7 +704,8 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user)
     av_frame_unref(frame);
 
     // 预初始化转换上下文
-    if(!back_buffer.sws_ctx) {
+    if (!back_buffer.sws_ctx)
+    {
         back_buffer.sws_ctx = sws_getContext(
             back_buffer.frame->width, back_buffer.frame->height,
             chiaki_ffmpeg_decoder_get_pixel_format(decoder),
@@ -692,7 +715,8 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user)
     }
 
     // 预分配RGB帧
-    if(!back_buffer.rgb_frame) {
+    if (!back_buffer.rgb_frame)
+    {
         back_buffer.rgb_frame = av_frame_alloc();
         back_buffer.rgb_frame->format = AV_PIX_FMT_BGR24;
         back_buffer.rgb_frame->width = back_buffer.frame->width;
@@ -702,12 +726,14 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user)
 
     // 执行格式转换
     sws_scale(back_buffer.sws_ctx,
-        back_buffer.frame->data, back_buffer.frame->linesize,
-        0, back_buffer.frame->height,
-        back_buffer.rgb_frame->data, back_buffer.rgb_frame->linesize);
+              back_buffer.frame->data, back_buffer.frame->linesize,
+              0, back_buffer.frame->height,
+              back_buffer.rgb_frame->data, back_buffer.rgb_frame->linesize);
 
-    // 标记缓冲已更新
+    // 设置交换标志
+    chiaki_mutex_lock(&swap_mutex);
     buffer_swapped = true;
+    chiaki_mutex_unlock(&swap_mutex);
     chiaki_mutex_unlock(&back_buffer.mutex);
 }
 
@@ -759,7 +785,7 @@ CHIAKI_EXPORT void sendControllAnlogButton(uint32_t buttonMask, unsigned int sle
     chiaki_session_set_controller_state(session, &state);
 }
 
-CHIAKI_EXPORT void sendLeftStickDirection(float angle_rad,int sleepTimeMs,int16_t strength)
+CHIAKI_EXPORT void sendLeftStickDirection(float angle_rad, int sleepTimeMs, int16_t strength)
 {
 
     ChiakiControllerState state;

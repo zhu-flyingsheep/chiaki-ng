@@ -21,17 +21,19 @@ extern "C"
         int linesize;
     } RGBFrameInfo;
 
-    // 新增结构体管理帧缓冲
+    // 修改后的FrameBuffer结构
     typedef struct FrameBuffer
     {
         AVFrame *frame;
         struct SwsContext *sws_ctx;
         AVFrame *rgb_frame;
-        ChiakiMutex mutex;
+        chiaki_mutex_t mutex;
     } FrameBuffer;
-    static FrameBuffer front_buffer;  // 前台缓冲（用于显示）
-    static FrameBuffer back_buffer;   // 后台缓冲（用于解码）
-    static atomic_bool buffer_swapped = false;
+
+    static FrameBuffer front_buffer;
+    static FrameBuffer back_buffer;
+    static bool buffer_swapped = false;
+    static chiaki_mutex_t swap_mutex;
 
     CHIAKI_EXPORT void ReleaseCurrentFrame(); // 释放当前帧的导出函数
 
@@ -51,9 +53,6 @@ extern "C"
                                           void *cb_user);
     static ChiakiFfmpegDecoder *ffmpeg_decoder;
     static ChiakiSession *session;
-
-
-
 
     CHIAKI_EXPORT ChiakiErrorCode start_session(const char *host,
                                                 const char *string_rp_key,
