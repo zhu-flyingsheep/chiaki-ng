@@ -21,10 +21,55 @@
 #include <ifaddrs.h>
 #include <arpa/inet.h>
 #endif
+// 在文件开头添加
+#include <time.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <sys/time.h>
+#endif
 
 #define PING_MS 500
 #define HOSTS_MAX 16
 #define DROP_PINGS 3
+// 帧率控制结构
+typedef struct {
+    int64_t last_frame_time;
+    int64_t frame_interval;
+    int target_fps;
+} FrameRateControl;
+
+static FrameRateControl frame_control = {
+    .last_frame_time = 0,
+    .frame_interval = 1000000 / 3,  // 3 FPS (微秒)
+    .target_fps = 3
+};
+
+// 获取当前时间(微秒)
+static int64_t get_current_time_us() {
+#ifdef _WIN32
+    LARGE_INTEGER frequency;
+    LARGE_INTEGER counter;
+    QueryPerformanceFrequency(&frequency);
+    QueryPerformanceCounter(&counter);
+    return (counter.QuadPart * 1000000) / frequency.QuadPart;
+#else
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec * 1000000LL + tv.tv_usec;
+#endif
+}
+
+// 检查是否应该处理这一帧
+static bool should_process_frame() {
+    int64_t current_time = get_current_time_us();
+    if (frame_control.last_frame_time == 0 || 
+        current_time - frame_control.last_frame_time >= frame_control.frame_interval) {
+        frame_control.last_frame_time = current_time;
+        return true;
+    }
+    return false;
+}
 
 static void CantDisplayCb(void *user, bool cant_display);
 static void EventCb(ChiakiEvent *event, void *user);
@@ -516,9 +561,9 @@ CHIAKI_EXPORT ChiakiErrorCode start_session(const char *host,
     connect_info.video_profile.width = 1280;
     connect_info.video_profile.height = 720;
     connect_info.video_profile.max_fps = 3;
-    connect_info.video_profile.bitrate = 10000;
+    connect_info.video_profile.bitrate = 2000;
     connect_info.video_profile.codec = CHIAKI_CODEC_H264;
-    connect_info.video_profile_auto_downgrade = true;
+    connect_info.video_profile_auto_downgrade = false;
     connect_info.enable_keyboard = false;
     connect_info.enable_dualsense = true;
     connect_info.audio_video_disabled = CHIAKI_AUDIO_DISABLED;
@@ -685,6 +730,17 @@ CHIAKI_EXPORT RGBFrameInfo pullRgbFrame()
 //--------------------------------------------------
 static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user)
 {
+    // 检查是否需要处理这一帧
+    if (!should_process_frame()) {
+        // 跳过这一帧，释放资源
+        int32_t frames_lost;
+        AVFrame *frame = chiaki_ffmpeg_decoder_pull_frame(decoder, &frames_lost);
+        if (frame) {
+            av_frame_free(&frame);
+        }
+        return;
+    }
+
     ChiakiSession *sess = (ChiakiSession *)user;
     int32_t frames_lost;
     AVFrame *frame = chiaki_ffmpeg_decoder_pull_frame(decoder, &frames_lost);
@@ -728,12 +784,14 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user)
             CHIAKI_LOGE(sess->log, "Failed to transfer frame from hardware\n");
             av_frame_unref(frame);
             av_frame_free(&sw_frame);
+            chiaki_mutex_unlock(&back_buffer.mutex);
             return;
         }
         av_frame_copy_props(sw_frame, frame);
         av_frame_unref(frame);
         frame = sw_frame;
     }
+
     // 克隆新帧到后台缓冲
     back_buffer.frame = av_frame_clone(frame);
     av_frame_unref(frame);
@@ -770,6 +828,8 @@ static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user)
     buffer_swapped = true;
     chiaki_mutex_unlock(&swap_mutex);
     chiaki_mutex_unlock(&back_buffer.mutex);
+
+    CHIAKI_LOGD(sess->log, "Processed frame at time: %lld us", get_current_time_us());
 }
 
 CHIAKI_EXPORT void goto_bed()
