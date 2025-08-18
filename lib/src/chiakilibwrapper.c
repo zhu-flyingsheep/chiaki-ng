@@ -865,9 +865,9 @@ CHIAKI_EXPORT void sendControllAnlogButton(uint32_t buttonMask, unsigned int sle
     chiaki_controller_state_set_idle(&state);
 
     // 2. 标记模拟按钮并设置力度
-    if (analogButton == CHIAKI_CONTROLLER_ANALOG_BUTTON_L2)
+    if (buttonMask == CHIAKI_CONTROLLER_ANALOG_BUTTON_L2)
         state.l2_state = strength;
-    else if (analogButton == CHIAKI_CONTROLLER_ANALOG_BUTTON_R2)
+    else if (buttonMask == CHIAKI_CONTROLLER_ANALOG_BUTTON_R2)
         state.r2_state = strength;
     chiaki_session_set_controller_state(session, &state);
 
