@@ -71,7 +71,7 @@ extern "C"
         unsigned int stickHoldMs,   // 摇杆先保持多久
         uint32_t buttonMask, 
         unsigned int buttonHoldMs   // 按键按下多久
-    )
+    );
     CHIAKI_EXPORT void sendRightStickDirection(float angle_rad, int sleepTimeMs, int16_t strength);
     CHIAKI_EXPORT void sendRightStickThenButton(
         float angle_rad, 
@@ -79,7 +79,7 @@ extern "C"
         unsigned int stickHoldMs,   // 摇杆先保持多久
         uint32_t buttonMask, 
         unsigned int buttonHoldMs   // 按键按下多久
-    )
+    );
 
 #ifdef __cplusplus
 }
