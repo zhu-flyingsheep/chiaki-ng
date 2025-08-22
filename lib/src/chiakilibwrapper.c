@@ -909,6 +909,54 @@ CHIAKI_EXPORT void sendLeftStickDirection(float angle_rad, int sleepTimeMs, int1
     chiaki_session_set_controller_state(session, &state);
 }
 
+CHIAKI_EXPORT void sendLeftStickThenButton(
+    float angle_rad, 
+    int16_t strength, 
+    unsigned int stickHoldMs,   // 摇杆先保持多久
+    uint32_t buttonMask, 
+    unsigned int buttonHoldMs   // 按键按下多久
+)
+{
+    ChiakiControllerState state;
+
+    // 1. 先推摇杆
+    chiaki_controller_state_set_idle(&state);
+    state.left_x = (int16_t)(cosf(angle_rad) * strength);
+    state.left_y = (int16_t)(sinf(angle_rad) * strength);
+    chiaki_session_set_controller_state(session, &state);
+
+#ifdef _WIN32
+    Sleep(stickHoldMs);   // 先保持一段时间，只推摇杆
+#else
+    usleep(stickHoldMs * 1000);
+#endif
+
+    // 2. 在摇杆保持的同时，加上按键
+    state.buttons = buttonMask;
+    chiaki_session_set_controller_state(session, &state);
+
+#ifdef _WIN32
+    Sleep(buttonHoldMs);  // 按住按键这段时间
+#else
+    usleep(buttonHoldMs * 1000);
+#endif
+
+    // 3. 松开按键，但继续保持摇杆（可选）
+    state.buttons = 0;
+    chiaki_session_set_controller_state(session, &state);
+
+    // 如果摇杆也要松开，可以在这里再 Sleep 一下，然后 reset
+#ifdef _WIN32
+    Sleep(50);  // 给一点时间再松开摇杆
+#else
+    usleep(50 * 1000);
+#endif
+
+    // 4. 全部松开
+    chiaki_controller_state_set_idle(&state);
+    chiaki_session_set_controller_state(session, &state);
+}
+
 CHIAKI_EXPORT void sendRightStickDirection(float angle_rad, int sleepTimeMs, int16_t strength)
 {
 
@@ -932,6 +980,54 @@ CHIAKI_EXPORT void sendRightStickDirection(float angle_rad, int sleepTimeMs, int
 #endif
 
     /* 5) 重置为 “松开” 并再次发送 */
+    chiaki_controller_state_set_idle(&state);
+    chiaki_session_set_controller_state(session, &state);
+}
+
+CHIAKI_EXPORT void sendRightStickThenButton(
+    float angle_rad, 
+    int16_t strength, 
+    unsigned int stickHoldMs,   // 摇杆先保持多久
+    uint32_t buttonMask, 
+    unsigned int buttonHoldMs   // 按键按下多久
+)
+{
+    ChiakiControllerState state;
+
+    // 1. 先推摇杆
+    chiaki_controller_state_set_idle(&state);
+    state.right_x = (int16_t)(cosf(angle_rad) * strength);
+    state.right_y = (int16_t)(sinf(angle_rad) * strength);
+    chiaki_session_set_controller_state(session, &state);
+
+#ifdef _WIN32
+    Sleep(stickHoldMs);   // 先保持一段时间，只推摇杆
+#else
+    usleep(stickHoldMs * 1000);
+#endif
+
+    // 2. 在摇杆保持的同时，加上按键
+    state.buttons = buttonMask;
+    chiaki_session_set_controller_state(session, &state);
+
+#ifdef _WIN32
+    Sleep(buttonHoldMs);  // 按住按键这段时间
+#else
+    usleep(buttonHoldMs * 1000);
+#endif
+
+    // 3. 松开按键，但继续保持摇杆（可选）
+    state.buttons = 0;
+    chiaki_session_set_controller_state(session, &state);
+
+    // 如果摇杆也要松开，可以在这里再 Sleep 一下，然后 reset
+#ifdef _WIN32
+    Sleep(50);  // 给一点时间再松开摇杆
+#else
+    usleep(50 * 1000);
+#endif
+
+    // 4. 全部松开
     chiaki_controller_state_set_idle(&state);
     chiaki_session_set_controller_state(session, &state);
 }

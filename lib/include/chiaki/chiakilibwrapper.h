@@ -65,8 +65,21 @@ extern "C"
     CHIAKI_EXPORT void sendControllButton(uint32_t buttonMask, unsigned int sleepTimeMs);
     CHIAKI_EXPORT void sendControllAnlogButton(uint32_t buttonMask, unsigned int sleepTimeMs, uint8_t strength);
     CHIAKI_EXPORT void sendLeftStickDirection(float angle_rad, int sleepTimeMs, int16_t strength);
+    CHIAKI_EXPORT void sendLeftStickThenButton(
+        float angle_rad, 
+        int16_t strength, 
+        unsigned int stickHoldMs,   // 摇杆先保持多久
+        uint32_t buttonMask, 
+        unsigned int buttonHoldMs   // 按键按下多久
+    )
     CHIAKI_EXPORT void sendRightStickDirection(float angle_rad, int sleepTimeMs, int16_t strength);
-
+    CHIAKI_EXPORT void sendRightStickThenButton(
+        float angle_rad, 
+        int16_t strength, 
+        unsigned int stickHoldMs,   // 摇杆先保持多久
+        uint32_t buttonMask, 
+        unsigned int buttonHoldMs   // 按键按下多久
+    )
 
 #ifdef __cplusplus
 }
