@@ -178,7 +178,8 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_stop_pipe_connect(ChiakiStopPipe *stop_pipe
 
 	if(CHIAKI_SOCKET_EINPROGRESS)
 	{
-		ChiakiErrorCode err = chiaki_stop_pipe_select_single(stop_pipe, fd, true, UINT64_MAX);
+		// 设置连接超时时间为10秒，避免无限等待错误的IP
+		ChiakiErrorCode err = chiaki_stop_pipe_select_single(stop_pipe, fd, true, 10000);
 		if(err != CHIAKI_ERR_SUCCESS)
 			return err;
 	}
