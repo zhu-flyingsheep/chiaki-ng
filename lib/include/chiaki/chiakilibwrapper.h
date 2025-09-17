@@ -54,11 +54,16 @@ extern "C"
     static ChiakiFfmpegDecoder *ffmpeg_decoder;
     static ChiakiSession *session;
 
+    // 退出回调函数类型定义
+    typedef void (*ChiakiQuitCallback)(int quit_reason, const char* reason_string, void* user_data);
+
     CHIAKI_EXPORT ChiakiErrorCode start_session(const char *host,
                                                 const char *string_rp_key,
                                                 const char *rp_regist_key,
                                                 ChiakiTarget target,
-                                                ChiakiLog *log);
+                                                ChiakiLog *log,
+                                                ChiakiQuitCallback quit_callback,
+                                                void* user_data);
 
     CHIAKI_EXPORT void goto_bed();
 

@@ -552,8 +552,7 @@ void hex_string_to_uint8_array(const char *str, uint8_t *arr, size_t arr_size)
 
 static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user);
 
-// 退出回调函数类型定义
-typedef void (*ChiakiQuitCallback)(int quit_reason, const char* reason_string, void* user_data);
+
 
 CHIAKI_EXPORT ChiakiErrorCode start_session(const char *host,
                                             const char *string_rp_key,
