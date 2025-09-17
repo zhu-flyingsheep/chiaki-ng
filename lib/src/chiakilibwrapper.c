@@ -45,6 +45,19 @@ static FrameRateControl frame_control = {
     .target_fps = 3
 };
 
+// 会话状态控制
+typedef struct {
+    volatile int session_active;  // 会话是否活跃
+    void (*quit_callback)(int quit_reason, const char* reason_string, void* user_data);  // 退出回调
+    void* user_data;  // 用户数据
+} SessionControl;
+
+static SessionControl session_control = {
+    .session_active = 0,
+    .quit_callback = NULL,
+    .user_data = NULL
+};
+
 // 获取当前时间(微秒)
 static int64_t get_current_time_us() {
 #ifdef _WIN32
@@ -539,11 +552,16 @@ void hex_string_to_uint8_array(const char *str, uint8_t *arr, size_t arr_size)
 
 static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user);
 
+// 退出回调函数类型定义
+typedef void (*ChiakiQuitCallback)(int quit_reason, const char* reason_string, void* user_data);
+
 CHIAKI_EXPORT ChiakiErrorCode start_session(const char *host,
                                             const char *string_rp_key,
                                             const char *string_rp_regist_key,
                                             ChiakiTarget target,
-                                            ChiakiLog *log)
+                                            ChiakiLog *log,
+                                            ChiakiQuitCallback quit_callback,
+                                            void* user_data)
 {
     uint8_t morning[16];
     uint8_t regist_key[16];
@@ -627,6 +645,11 @@ CHIAKI_EXPORT ChiakiErrorCode start_session(const char *host,
     // 设置事件回调，用于日志输出
     chiaki_session_set_event_cb(session, EventCb, log);
 
+    // 设置会话控制状态
+    session_control.session_active = 1;
+    session_control.quit_callback = quit_callback;
+    session_control.user_data = user_data;
+
     err = chiaki_session_start(session);
     if (err != CHIAKI_ERR_SUCCESS)
     {
@@ -657,6 +680,15 @@ static void EventCb(ChiakiEvent *event, void *user)
             if(event->quit.reason_str)
             {
                 CHIAKI_LOGE(log, "Quit reason: %s", event->quit.reason_str);
+            }
+            
+            // 停止帧处理
+            session_control.session_active = 0;
+            
+            // 调用退出回调
+            if (session_control.quit_callback)
+            {
+                session_control.quit_callback(event->quit.reason, event->quit.reason_str, session_control.user_data);
             }
             break;
             
@@ -773,6 +805,17 @@ CHIAKI_EXPORT RGBFrameInfo pullRgbFrame()
 //--------------------------------------------------
 static void MyFfmpegFrameCb(ChiakiFfmpegDecoder *decoder, void *user)
 {
+    // 检查会话是否仍然活跃
+    if (!session_control.session_active) {
+        // 会话已退出，停止帧处理
+        int32_t frames_lost;
+        AVFrame *frame = chiaki_ffmpeg_decoder_pull_frame(decoder, &frames_lost);
+        if (frame) {
+            av_frame_free(&frame);
+        }
+        return;
+    }
+    
     // 检查是否需要处理这一帧
     if (!should_process_frame()) {
         // 跳过这一帧，释放资源
