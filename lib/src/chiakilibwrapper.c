@@ -623,6 +623,9 @@ CHIAKI_EXPORT ChiakiErrorCode start_session(const char *host,
     chiaki_session_ctrl_set_display_sink(&session, &display_sink);
 
     chiaki_session_set_video_sample_cb(session, chiaki_ffmpeg_decoder_video_sample_cb, ffmpeg_decoder);
+    
+    // 设置事件回调，用于日志输出
+    chiaki_session_set_event_cb(session, EventCb, log);
 
     err = chiaki_session_start(session);
     if (err != CHIAKI_ERR_SUCCESS)
@@ -640,6 +643,46 @@ static void CantDisplayCb(void *user, bool cant_display)
 
 static void EventCb(ChiakiEvent *event, void *user)
 {
+    ChiakiLog *log = (ChiakiLog *)user;
+    
+    switch(event->type)
+    {
+        case CHIAKI_EVENT_CONNECTED:
+            CHIAKI_LOGI(log, "Session connected successfully");
+            // 连接成功，无需回调通知
+            break;
+            
+        case CHIAKI_EVENT_QUIT:
+            CHIAKI_LOGE(log, "Session quit: %s", chiaki_quit_reason_string(event->quit.reason));
+            if(event->quit.reason_str)
+            {
+                CHIAKI_LOGE(log, "Quit reason: %s", event->quit.reason_str);
+            }
+            break;
+            
+        case CHIAKI_EVENT_LOGIN_PIN_REQUEST:
+            CHIAKI_LOGI(log, "Login PIN requested (incorrect: %s)", event->login_pin_request.pin_incorrect ? "yes" : "no");
+            break;
+            
+        case CHIAKI_EVENT_REGIST:
+            CHIAKI_LOGI(log, "Auto registration succeeded");
+            // 自动注册成功，无需回调通知
+            break;
+            
+        case CHIAKI_EVENT_NICKNAME_RECEIVED:
+            CHIAKI_LOGI(log, "Server nickname received: %s", event->server_nickname);
+            // 收到服务器昵称，无需回调通知
+            break;
+            
+        case CHIAKI_EVENT_HOLEPUNCH:
+            CHIAKI_LOGI(log, "Data holepunch %s", event->data_holepunch.finished ? "finished" : "started");
+            // 数据通道状态，无需回调通知
+            break;
+            
+        default:
+            CHIAKI_LOGD(log, "Unhandled event type: %d", event->type);
+            break;
+    }
 }
 
 static void AudioSettingsCb(uint32_t channels, uint32_t rate, void *user)

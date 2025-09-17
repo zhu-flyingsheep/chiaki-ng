@@ -40,3 +40,4 @@ chiaki.conf
 *.vscode
 site/
 
+android/gradle/wrapper/gradle-wrapper.properties
