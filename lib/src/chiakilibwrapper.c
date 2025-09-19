@@ -676,9 +676,37 @@ static void EventCb(ChiakiEvent *event, void *user)
             
         case CHIAKI_EVENT_QUIT:
             CHIAKI_LOGE(log, "Session quit: %s", chiaki_quit_reason_string(event->quit.reason));
-            if(event->quit.reason_str)
+            
+            // 创建安全的字符串副本
+            char* safe_reason_str = NULL;
+            if (event->quit.reason_str)
             {
-                CHIAKI_LOGE(log, "Quit reason: %s", event->quit.reason_str);
+                // 验证原始字符串
+                if (!IsBadReadPtr(event->quit.reason_str, 1))
+                {
+                    size_t len = strlen(event->quit.reason_str);
+                    if (len > 0 && len < 1000)
+                    {
+                        safe_reason_str = malloc(len + 1);
+                        if (safe_reason_str)
+                        {
+                            strcpy(safe_reason_str, event->quit.reason_str);
+                            CHIAKI_LOGE(log, "Quit reason: %s", safe_reason_str);
+                        }
+                        else
+                        {
+                            CHIAKI_LOGE(log, "Failed to allocate memory for reason string");
+                        }
+                    }
+                    else
+                    {
+                        CHIAKI_LOGE(log, "Invalid reason string length: %zu", len);
+                    }
+                }
+                else
+                {
+                    CHIAKI_LOGE(log, "Invalid reason string pointer");
+                }
             }
             
             // 停止帧处理
@@ -687,7 +715,13 @@ static void EventCb(ChiakiEvent *event, void *user)
             // 调用退出回调
             if (session_control.quit_callback)
             {
-                session_control.quit_callback(event->quit.reason, event->quit.reason_str, session_control.user_data);
+                session_control.quit_callback(event->quit.reason, safe_reason_str, session_control.user_data);
+            }
+            
+            // 释放安全字符串
+            if (safe_reason_str)
+            {
+                free(safe_reason_str);
             }
             break;
             
