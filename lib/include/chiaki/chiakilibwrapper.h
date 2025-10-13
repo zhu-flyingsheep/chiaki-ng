@@ -85,6 +85,18 @@ extern "C"
         uint32_t buttonMask, 
         unsigned int buttonHoldMs   // 按键按下多久
     );
+    CHIAKI_EXPORT void powerShoot(
+        float angle_rad,                // 左摇杆方向角度
+        int16_t strength,               // 左摇杆力度
+        unsigned int l1r1StickHoldMs,   // L1+R1+左摇杆 同时按住的时间（毫秒）
+        unsigned int chargeMs           // 蓄力时长（毫秒，对应70-90%蓄力）
+    );
+    CHIAKI_EXPORT void chipShot(
+        float angle_rad,            // 左摇杆方向角度
+        int16_t strength,           // 左摇杆力度
+        unsigned int l1HoldMs,      // L1 按住的时间（毫秒）
+        unsigned int chargeMs       // 圆圈键蓄力时长（毫秒）
+    );
 
 #ifdef __cplusplus
 }

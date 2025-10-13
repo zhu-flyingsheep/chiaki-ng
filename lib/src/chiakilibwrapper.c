@@ -1150,3 +1150,108 @@ CHIAKI_EXPORT void sendRightStickThenButton(
     chiaki_controller_state_set_idle(&state);
     chiaki_session_set_controller_state(session, &state);
 }
+
+CHIAKI_EXPORT void powerShoot(
+    float angle_rad,                // 左摇杆方向角度
+    int16_t strength,               // 左摇杆力度
+    unsigned int l1r1StickHoldMs,   // L1+R1+左摇杆 同时按住的时间（毫秒）
+    unsigned int chargeMs           // 蓄力时长（毫秒，对应70-90%蓄力）
+)
+{
+    ChiakiControllerState state;
+
+    // 1. 同时按下 L1 + R1 + 左摇杆
+    chiaki_controller_state_set_idle(&state);
+    state.buttons = (1 << 8) | (1 << 9);  // L1 | R1
+    state.left_x = (int16_t)(cosf(angle_rad) * strength);
+    state.left_y = (int16_t)(sinf(angle_rad) * strength);
+    chiaki_session_set_controller_state(session, &state);
+
+#ifdef _WIN32
+    Sleep(l1r1StickHoldMs);  // L1+R1+左摇杆 同时保持指定时间
+#else
+    usleep(l1r1StickHoldMs * 1000);
+#endif
+
+    // 2. 加上圆圈键（Circle/Moon按钮）开始蓄力，同时保持 L1+R1 和摇杆
+    state.buttons |= (1 << 1);  // 加上 MOON (Circle)
+    chiaki_session_set_controller_state(session, &state);
+
+#ifdef _WIN32
+    Sleep(chargeMs);  // 蓄力时长（70-90%）
+#else
+    usleep(chargeMs * 1000);
+#endif
+
+    // 3. 松开圆圈键发射，但保持 L1+R1 和摇杆方向
+    state.buttons &= ~(1 << 1);  // 只松开 Circle
+    chiaki_session_set_controller_state(session, &state);
+
+#ifdef _WIN32
+    Sleep(50);  // 给一点时间让射门生效
+#else
+    usleep(50 * 1000);
+#endif
+
+    // 4. 全部松开
+    chiaki_controller_state_set_idle(&state);
+    chiaki_session_set_controller_state(session, &state);
+}
+
+CHIAKI_EXPORT void chipShot(
+    float angle_rad,            // 左摇杆方向角度
+    int16_t strength,           // 左摇杆力度
+    unsigned int l1HoldMs,      // L1 按住的时间（毫秒）
+    unsigned int chargeMs       // 圆圈键蓄力时长（毫秒）
+)
+{
+    ChiakiControllerState state;
+
+    // 1. 按住 L1
+    chiaki_controller_state_set_idle(&state);
+    state.buttons = (1 << 8);  // L1
+    chiaki_session_set_controller_state(session, &state);
+
+#ifdef _WIN32
+    Sleep(l1HoldMs);  // L1 保持指定时间
+#else
+    usleep(l1HoldMs * 1000);
+#endif
+
+    // 2. 加上左摇杆方向（如果需要）
+    if (strength > 0) {
+        state.left_x = (int16_t)(cosf(angle_rad) * strength);
+        state.left_y = (int16_t)(sinf(angle_rad) * strength);
+        chiaki_session_set_controller_state(session, &state);
+
+#ifdef _WIN32
+        Sleep(50);  // 稍等一下确保方向输入
+#else
+        usleep(50 * 1000);
+#endif
+    }
+
+    // 3. 加上圆圈键（Circle/Moon按钮）开始蓄力，同时保持 L1 和摇杆
+    state.buttons |= (1 << 1);  // 加上 MOON (Circle ⭕)
+    chiaki_session_set_controller_state(session, &state);
+
+#ifdef _WIN32
+    Sleep(chargeMs);  // 蓄力时长
+#else
+    usleep(chargeMs * 1000);
+#endif
+
+    // 4. 松开圆圈键发射，但保持 L1 和摇杆方向
+    state.buttons &= ~(1 << 1);  // 只松开 Circle
+    chiaki_session_set_controller_state(session, &state);
+
+#ifdef _WIN32
+    Sleep(50);  // 给一点时间让挑射生效
+#else
+    usleep(50 * 1000);
+#endif
+
+    // 5. 全部松开
+    chiaki_controller_state_set_idle(&state);
+    chiaki_session_set_controller_state(session, &state);
+}
